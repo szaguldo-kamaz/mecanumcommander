@@ -26,6 +26,12 @@
 #define COMMANDER_VERSION  "0.40"
 #define COMMANDER_PASSWORD "PASSWORD"
 
+#define REPEAT_TIME_SEC_CMDSENT 0.4
+#define REPEAT_TIME_SEC_KCMDSENT 0.4
+#define REPEAT_TIME_SEC_REMOTECMDRECV 0.5
+//#define REPEAT_TIME_SEC_MEMMAPREAD 0.5
+#define REPEAT_TIME_SEC_MEMMAPREAD 0.4
+
 int got_sigpipe=0;
 
 
@@ -358,7 +364,7 @@ int main() {
 
         if (dummymode==0) {
 
-            if ((time_current-time_last_memmapread)>0.5) {
+            if ((time_current-time_last_memmapread)>REPEAT_TIME_SEC_MEMMAPREAD) {
 
                 int fd;
 
@@ -940,7 +946,7 @@ int main() {
         time_current=timestruct.time+(timestruct.millitm/1000.0);
 
         if (remotecontrol==1) {
-            if ((time_current-time_last_remotecmd_recv)>0.5) {
+            if ((time_current-time_last_remotecmd_recv)>REPEAT_TIME_SEC_REMOTECMDRECV) {
                 if (remotecmd_timed_out==0) {
                     unsigned char replymsg[16];
                     int wret;
@@ -971,7 +977,7 @@ int main() {
             }
         }
 
-        if ((usekcommands==1) && ((time_current-time_last_kcmdsent)>0.4)) {
+        if ((usekcommands==1) && ((time_current-time_last_kcmdsent)>REPEAT_TIME_SEC_KCMDSENT)) {
             if (dummymode==0) {
                 commandsend_lamp_on();
                 setret=rover_kset_XYrotation_speed(speedX, speedY, rotate, answer);
@@ -981,7 +987,7 @@ int main() {
             }
         }
 
-        if ((usekcommands==0) && ((time_current-time_last_cmdsent)>0.4)) {
+        if ((usekcommands==0) && ((time_current-time_last_cmdsent)>REPEAT_TIME_SEC_CMDSENT)) {
 
             if ( (set_new_spx_value_from_remote==1) || (prevspeedX != speedX) ) {
 // pozitiv elore -- negativ hatra
