@@ -51,10 +51,10 @@
 
 
 struct roverstruct {
-    unsigned int sysname;
-    unsigned int firmrev;
-    unsigned int rs485_err_0x10;
-    unsigned int rs485_err_0x1F;
+    unsigned  int sysname;
+    unsigned  int firmrev;
+    unsigned  int rs485_err_0x10;
+    unsigned  int rs485_err_0x1F;
     unsigned char memmap_main[512];
     unsigned char memmap_front[512];
     unsigned char fullname[32];
@@ -107,7 +107,7 @@ int check_and_remove_rs485_error(unsigned char *message);
 int check_invalidchars(unsigned char *message);
 int check_and_remove_readey(unsigned char *message); // readey (sic!)
 
-// serial send
+// serial port - transmit
 int send_command_raw(unsigned char *message, unsigned char messagelen, unsigned char *reply);
 // hexstring->endianness->num
 int read_register_from_memmap(unsigned char *memmap, unsigned char addr, unsigned char reglen);

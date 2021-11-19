@@ -117,7 +117,7 @@ int send_command_raw(unsigned char *message, unsigned char messagelen, unsigned 
     ret=-1;
     FD_ZERO(&serfdset);
     FD_SET(serial, &serfdset);
-    tv.tv_sec = 0;
+    tv.tv_sec  = 0;
     tv.tv_usec = 100000;
 //    tv.tv_usec = 10000;
 
@@ -397,17 +397,17 @@ int rover_read_full_memmap(unsigned char *memmap, unsigned int controller_id, st
     // try 3 times
     for(i=0;i<3;i++) {
         ret=rover_read_register(controller_id,0x00,64,replyfull,rover);
-        if (ret==0)  { break; }
+        if (ret== 0) { break; }
         if (ret==-2) { return -2; }
     }
     for(i=0;i<3;i++) {
         ret=rover_read_register(controller_id,0x40,64,replyfull,rover);
-        if (ret==0)  { break; }
+        if (ret== 0) { break; }
         if (ret==-2) { return -2; }
     }
     for(i=0;i<3;i++) {
         ret=rover_read_register(controller_id,0x80,64,replyfull,rover);
-        if (ret==0)  { break; }
+        if (ret== 0) { break; }
         if (ret==-2) { return -2; }
     }
 
@@ -467,21 +467,17 @@ int rover_set_measured_position0(unsigned int value, unsigned char *reply)  { re
 int rover_set_measured_position1(unsigned int value, unsigned char *reply)  { return rover_write_register_uint32(ROVER_CONTROLLER_ADDR_REAR, ROVER_REG_MEASUREDPOS1, value, reply); }
 
 /*
- "kkk" commands
+ "kkk" commands:
 
- as we have experienced bit errors in the communication between the host and the robot controller
- when there was load and blocking on the motors
- we needed a workaround to make the communication more stable
- so we developed another protocol (in a way not to interfere with the original protocol)
- where everything is sent three times
- this way error detection and correction can be both simply achieved
- the robot controller's firmware was modified accordingly...
- as the source code of the robot controller's firmware is not open/free, we cannot publish it here
- in case you have bought the robot and have the source code of the firmware, we can send you patches on your request
- also, to increase safety, kkk set speed command has a timeout, so it should be periodically repeated, otherwise the robot will stop
+ We developed another command set (in a way not to interfere with the original protocol) for a more robust communication method,
+ where everything is sent three times, this way error detection and correction can be both simply achieved.
+ The robot controller's firmware was modified accordingly...
+ As the source code of the robot controller's firmware is of course not open/free, we cannot publish it here.
+ In case you have bought the robot and have the source code of the firmware, we can send you the patches on your request.
+ Also, to increase safety, kkk set speed command always has a timeout, so it should be periodically repeated, otherwise the robot will stop.
 */
 
-// kkk STOP command
+// kkk STOP command - "STPSTPSTP"
 int rover_kset_STOP(unsigned char *reply) {
     unsigned char datatosend[16]="STPSTPSTP\n\n\n\0";
 #ifdef DEBUG
@@ -512,11 +508,11 @@ int rover_kset_XYrotation_speed(int xspeed, int yspeed, int rotspeed, unsigned c
     if (yspeed<0)   { yspeed  =0xFFFF-abs(yspeed);   }
     if (rotspeed<0) { rotspeed=0xFFFF-abs(rotspeed); }
 
-    xspeed_hi=(xspeed>>8)&0xFF;
-    yspeed_hi=(yspeed>>8)&0xFF;
+    xspeed_hi  =(  xspeed>>8)&0xFF;
+    yspeed_hi  =(  yspeed>>8)&0xFF;
     rotspeed_hi=(rotspeed>>8)&0xFF;
-    xspeed_lo=xspeed&0xFF;
-    yspeed_lo=yspeed&0xFF;
+    xspeed_lo  =  xspeed&0xFF;
+    yspeed_lo  =  yspeed&0xFF;
     rotspeed_lo=rotspeed&0xFF;
 
     // add +1 so no 0x00 s are sent (original proto is string based where 0x00 means end-of-string)
@@ -529,7 +525,7 @@ int rover_kset_XYrotation_speed(int xspeed, int yspeed, int rotspeed, unsigned c
     if (yspeed_lo  <255) { yspeed_lo++; };
     if (rotspeed_lo<255) { rotspeed_lo++; };
 
-    // should not happen (because -1500 to +1500 interval), just to be on the safe side
+    // should not happen (because of the -1500 to +1500 interval), just to be on the safe side
     if ( (xspeed_hi   == 0x0A)||(xspeed_hi   == 0x72)||(xspeed_hi   == 0x52)||(xspeed_hi   == 0x77)||(xspeed_hi   == 0x57) ) { xspeed_hi--; }
     if ( (yspeed_hi   == 0x0A)||(yspeed_hi   == 0x72)||(yspeed_hi   == 0x52)||(yspeed_hi   == 0x77)||(yspeed_hi   == 0x57) ) { yspeed_hi--; }
     if ( (rotspeed_hi == 0x0A)||(rotspeed_hi == 0x72)||(rotspeed_hi == 0x52)||(rotspeed_hi == 0x77)||(rotspeed_hi == 0x57) ) { rotspeed_hi--; }
