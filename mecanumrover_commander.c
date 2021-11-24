@@ -111,6 +111,7 @@ int main() {
     unsigned char remotecontrol=1;
     unsigned char dummymode=1;
     unsigned char keyboardmode=1;
+    unsigned char repeatcommands=1;
     unsigned char usekcommands=1;
     unsigned char readmemmapfromfile=1;
     unsigned int  speedval=200;
@@ -989,7 +990,7 @@ int main() {
 
         if ((usekcommands==0) && ((time_current-time_last_cmdsent)>REPEAT_TIME_SEC_CMDSENT)) {
 
-            if ( (set_new_spx_value_from_remote==1) || (prevspeedX != speedX) ) {
+            if ( (repeatcommands == 1) || (set_new_spx_value_from_remote==1) || (prevspeedX != speedX) ) {
 // pozitiv elore -- negativ hatra
                 if (dummymode==0) {
                     commandsend_lamp_on();
@@ -1001,7 +1002,7 @@ int main() {
                 prevspeedX=speedX;
             }
 
-            if ( (set_new_spy_value_from_remote==1) || (prevspeedY != speedY) ) {
+            if ( (repeatcommands == 1) || (set_new_spy_value_from_remote==1) || (prevspeedY != speedY) ) {
 // pozitiv balra - negativ jobbra
                 if (dummymode==0) {
                     commandsend_lamp_on();
@@ -1013,7 +1014,7 @@ int main() {
                 prevspeedY=speedY;
             }
 
-            if ( (set_new_rot_value_from_remote==1) || (prevrotate != rotate) ) {
+            if ( (repeatcommands == 1) || (set_new_rot_value_from_remote==1) || (prevrotate != rotate) ) {
 // pozitiv balra forgas (100 is meg eleg lassu)
                 if (dummymode==0) {
                     commandsend_lamp_on();
