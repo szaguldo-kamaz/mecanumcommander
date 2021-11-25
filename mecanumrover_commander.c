@@ -108,13 +108,12 @@ int main() {
     unsigned char set_new_spy_value_from_remote=0;
     unsigned char set_new_rot_value_from_remote=0;
 
-    unsigned char remotecontrol=1;
-    unsigned char dummymode=1;
-    unsigned char keyboardmode=1;
-    unsigned char repeatcommands=1;
-    unsigned char usekcommands=1;
-    unsigned char readmemmapfromfile=1;
-    unsigned int  speedval=200;
+    unsigned char remotecontrol=0;      // set to 1 to listen on tcp/3475 for easy remote control
+    unsigned char dummymode=0;          // for testing, do not send real commands to the robot
+    unsigned char keyboardmode=1;       // for future use...
+    unsigned char repeatcommands=1;     // repeat commands every REPEAT_TIME_SEC_CMDSENT, so "commandtimeout" on the robot's controller won't trigger
+    unsigned char usekcommands=0;       // use the "triple command set"
+    unsigned char readmemmapfromfile=1; // do not get the memmap from the robot, instead read it from a file
 
     rover.rs485_err_0x10=0;
     rover.rs485_err_0x1F=0;
@@ -497,7 +496,7 @@ int main() {
         mvprintw(statusdrawy+2,statusdrawx+22,"    %2.2lf V",rover.battery_voltage);
         attroff(COLOR_PAIR(1));
 
-        if (rover.motor_m1_status == 1 ) {
+        if (rover.motor_m1_status == 1) {
             attron(COLOR_PAIR(3));
             mvprintw(statusdrawy+3,statusdrawx+22,"On ");
             mvprintw(roverdrawy+3,roverdrawx+2,"M1");
@@ -508,7 +507,7 @@ int main() {
             mvprintw(roverdrawy+3,roverdrawx+2,"M1");
             attroff(COLOR_PAIR(5));
         }
-        if (rover.motor_m2_status == 1 ) {
+        if (rover.motor_m2_status == 1) {
             attron(COLOR_PAIR(3));
             mvprintw(statusdrawy+3,statusdrawx+26,"On ");
             mvprintw(roverdrawy+3,roverdrawx+11,"M2");
@@ -519,7 +518,7 @@ int main() {
             mvprintw(roverdrawy+3,roverdrawx+11,"M2");
             attroff(COLOR_PAIR(5));
         }
-        if (rover.motor_m3_status == 1 ) {
+        if (rover.motor_m3_status == 1) {
             attron(COLOR_PAIR(3));
             mvprintw(statusdrawy+3,statusdrawx+30,"On ");
             mvprintw(roverdrawy-1,roverdrawx+2,"M3");
@@ -530,7 +529,7 @@ int main() {
             mvprintw(roverdrawy-1,roverdrawx+2,"M3");
             attroff(COLOR_PAIR(5));
         }
-        if (rover.motor_m4_status == 1 ) {
+        if (rover.motor_m4_status == 1) {
             attron(COLOR_PAIR(3));
             mvprintw(statusdrawy+3,statusdrawx+34,"On ");
             mvprintw(roverdrawy-1,roverdrawx+11,"M4");
