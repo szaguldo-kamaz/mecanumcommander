@@ -3,6 +3,7 @@
     by David Vincze, vincze.david@webcode.hu
     at Human-System Laboratory, Chuo University, Tokyo, Japan, 2021
     version 0.40
+    https://github.com/szaguldo-kamaz/
 */
 
 //#define DEBUG 1
