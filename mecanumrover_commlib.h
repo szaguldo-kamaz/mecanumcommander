@@ -25,6 +25,8 @@
 #define ROVER_CONTROLLER_ADDR_REAR  0x10
 #define ROVER_CONTROLLER_ADDR_FRONT 0x1F
 
+#define MEGAROVER3_CONTROLLER_ADDR  0x10
+
 #define ROVER_REG_SYSTEMNAME        0x00
 #define ROVER_REG_FIRMWAREREVISION  0x02
 #define ROVER_REG_UPTIME            0x04
@@ -49,6 +51,11 @@
 #define ROVER_REG_SPEED_X           0xC0
 #define ROVER_REG_SPEED_Y           0xC2
 #define ROVER_REG_ROTATION          0xC4
+
+#define MEGAROVER3_REG_BATTERYVOLTAGE   0x82
+#define MEGAROVER3_REG_SPEED_X          0x90
+#define MEGAROVER3_REG_SPEED_Y          0x92
+#define MEGAROVER3_REG_ROTATION         0x94
 
 
 struct roverstruct {
