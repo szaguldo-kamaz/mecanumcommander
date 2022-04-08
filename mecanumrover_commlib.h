@@ -61,6 +61,9 @@
 struct roverstruct {
     unsigned  int sysname;
     unsigned  int firmrev;
+    unsigned char has_second_controller;
+    unsigned char has_Y_speed;
+    unsigned char motor_count;
     unsigned  int rs485_err_0x10;
     unsigned  int rs485_err_0x1F;
     unsigned char memmap_main[512];

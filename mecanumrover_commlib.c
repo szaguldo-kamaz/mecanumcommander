@@ -426,9 +426,15 @@ unsigned char rover_identify(struct roverstruct *rover, unsigned char *memmap) {
     switch (rover->sysname) {
         case 0x21:
             strcpy(rover->fullname, "MecanumRover V2.1\0");
+            rover->has_second_controller = 1;
+            rover->has_Y_speed = 1;
+            rover->motor_count = 4;
             return 0;
         case 0x30:
             strcpy(rover->fullname, "MegaRover V3\0");
+            rover->has_second_controller = 0;
+            rover->has_Y_speed = 0;
+            rover->motor_count = 2;
             return 0;
         default:
             strcpy(rover->fullname, "UNKNOWN\0");
