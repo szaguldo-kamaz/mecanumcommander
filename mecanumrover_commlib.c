@@ -420,6 +420,23 @@ int rover_read_full_memmap(unsigned char *memmap, unsigned int controller_id, st
 }
 
 
+unsigned char rover_identify(struct roverstruct *rover, unsigned char *memmap) {
+    rover->sysname = rover_get_sysname(memmap);
+    rover->firmrev = rover_get_firmrev(memmap);
+    switch (rover->sysname) {
+        case 0x21:
+            strcpy(rover->fullname, "MecanumRover V2.1\0");
+            return 0;
+        case 0x30:
+            strcpy(rover->fullname, "MegaRover V3\0");
+            return 0;
+        default:
+            strcpy(rover->fullname, "UNKNOWN\0");
+            return 1;
+    }
+}
+
+
 // extract values from previously read memmap
 int    rover_get_sysname(unsigned char *memmap)            { return read_register_from_memmap(memmap, ROVER_REG_SYSTEMNAME, 2); }
 int    rover_get_firmrev(unsigned char *memmap)            { return read_register_from_memmap(memmap, ROVER_REG_FIRMWAREREVISION, 2); }

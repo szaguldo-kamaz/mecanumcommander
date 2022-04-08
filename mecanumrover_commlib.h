@@ -128,6 +128,8 @@ int rover_write_register_int16(unsigned char id, unsigned char addr, int data, u
 int rover_write_register_uint32(unsigned char id, unsigned char addr, unsigned int data, unsigned char *reply);
 int rover_read_full_memmap(unsigned char *memmap, unsigned int controller_id, struct roverstruct *rover);
 
+unsigned char rover_identify(struct roverstruct *rover, unsigned char *memmap);
+
 // get values from previously read memmap
 int    rover_get_sysname(unsigned char *memmap);
 int    rover_get_firmrev(unsigned char *memmap);

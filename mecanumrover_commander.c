@@ -142,19 +142,11 @@ int main() {
         }
     }
 
-    rover.sysname = rover_get_sysname(rover.memmap_main);
-    rover.firmrev = rover_get_firmrev(rover.memmap_main);
-    if (rover.sysname == 0x21) {
-        strcpy(rover.fullname, "Mecanum Rover V2.1\0");
+    if (rover_identify(&rover, rover.memmap_main) == 0) {
         printf("Rover found: 0x%x:%s FWRev: 0x%x\n", rover.sysname, rover.fullname, rover.firmrev);
     } else {
-        if (rover.sysname == 0x30) {
-            strcpy(rover.fullname, "Mega Rover V3\0");
-            printf("Rover found: 0x%x:%s FWRev: 0x%x\n", rover.sysname, rover.fullname, rover.firmrev);
-        } else {
-            printf("Unknown rover type: 0x%X!\n", rover.sysname);
-            exit(1);
-        }
+        printf("Unknown rover type: 0x%X!\n", rover.sysname);
+        exit(1);
     }
 
     // bind to tcp/3475
