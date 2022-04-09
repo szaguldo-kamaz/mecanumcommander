@@ -471,6 +471,8 @@ unsigned char rover_identify_from_main_memmap(struct roverstruct *rover) {
 
     rover->sysname = rover_get_sysname(rover);
     rover->firmrev = rover_get_firmrev(rover);
+    rover->rs485_err_0x10 = 0;
+    rover->rs485_err_0x1F = 0;
 
     switch (rover->sysname) {
         case SYSNAME_MECANUMROVER21:

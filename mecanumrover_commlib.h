@@ -119,48 +119,6 @@ struct roverstruct {
     unsigned char memmap_main[512];
     unsigned char memmap_second[512];
     unsigned char fullname[32];
-    double uptime_sec;
-    double battery_voltage;
-    unsigned char main_motor_status;
-    unsigned char front_motor_status;
-    unsigned char motor_m1_status;
-    unsigned char motor_m2_status;
-    unsigned char motor_m3_status;
-    unsigned char motor_m4_status;
-
-    int front_speed0;
-    int front_speed1;
-    int main_speed0;
-    int main_speed1;
-    int front_measured_position0;
-    int front_measured_position1;
-    int main_measured_position0;
-    int main_measured_position1;
-    int front_encoder_value0;
-    int front_encoder_value1;
-    int main_encoder_value0;
-    int main_encoder_value1;
-    int front_outputoffset0;
-    int front_outputoffset1;
-    int main_outputoffset0;
-    int main_outputoffset1;
-    double front_motoroutput_calc0;
-    double front_motoroutput_calc1;
-    double main_motoroutput_calc0;
-    double main_motoroutput_calc1;
-    double front_measured_current_value0;
-    double front_measured_current_value1;
-    double main_measured_current_value0;
-    double main_measured_current_value1;
-    double front_max_current0;
-    double front_max_current1;
-    double main_max_current0;
-    double main_max_current1;
-    double front_current_limit0;
-    double front_current_limit1;
-    double main_current_limit0;
-    double main_current_limit1;
-
 };
 
 int conv_int16_to_int32(int int16);
