@@ -1,5 +1,5 @@
 /*
-    NLAB-MecanumCommlib for Linux, a simple library to control VStone MecanumRover 2.1
+    NLAB-MecanumCommlib for Linux, a simple library to control VStone MecanumRover 2.1 / VStone MegaRover 3
     by David Vincze, vincze.david@webcode.hu
     at Human-System Laboratory, Chuo University, Tokyo, Japan, 2021
     version 0.40
@@ -24,30 +24,42 @@ const struct rover_config rover_config_megarover3     = { 0, 0, 2, 3, 0 };
 
 
 const struct rover_regs rover_regs_unknown = {
-    0x10, 0x00,
+    CONTROLLER_ADDR_MAIN, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x02, 0x04,
+    ROVER_REG_SYSTEMNAME, ROVER_REG_FIRMWAREREVISION, ROVER_REG_UPTIME,
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
 const struct rover_regs rover_regs_mecanumrover21 = {
-    0x10, 0x1F,
-    0x90, 0xC0, 0xC2, 0xC4, 0x10,
-    0x00, 0x02, 0x04,
-    0x50, 0x52, 0x6C, 0x6E,
-    0x58, 0x5A, 0x5C, 0x5E, 0xA0, 0xA2,
-    0x60, 0x64, 0x68, 0x6A, 0x98, 0x9C
+    CONTROLLER_ADDR_MAIN, CONTROLLER_ADDR_SECOND,
+    MECANUMROVER21_REG_BATTERYVOLTAGE,
+    MECANUMROVER21_REG_SPEED_X, MECANUMROVER21_REG_SPEED_Y, MECANUMROVER21_REG_ROTATION, ROVER_REG_ENABLEMOTORS,
+    ROVER_REG_SYSTEMNAME, ROVER_REG_FIRMWAREREVISION, ROVER_REG_UPTIME,
+    MECANUMROVER21_REG_OUTPUTOFFSET0, MECANUMROVER21_REG_OUTPUTOFFSET1,
+    MECANUMROVER21_REG_MOTOROUTPUTCALC0, MECANUMROVER21_REG_MOTOROUTPUTCALC1,
+    MECANUMROVER21_REG_MAXCURRENT0, MECANUMROVER21_REG_MAXCURRENT1,
+    MECANUMROVER21_REG_CURRENTLIMIT0, MECANUMROVER21_REG_CURRENTLIMIT1,
+    MECANUMROVER21_REG_MEASUREDCURRENT0, MECANUMROVER21_REG_MEASUREDCURRENT1,
+    MECANUMROVER21_REG_MEASUREDPOS0, MECANUMROVER21_REG_MEASUREDPOS1,
+    MECANUMROVER21_REG_SPEED0, MECANUMROVER21_REG_SPEED1,
+    MECANUMROVER21_REG_ENCODERVALUE0, MECANUMROVER21_REG_ENCODERVALUE1
 };
 
 const struct rover_regs rover_regs_megarover3 = {
-    0x10, 0x10,
-    0x82, 0x90, 0x92, 0x94, 0x10,
-    0x00, 0x02, 0x04,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x50, 0x54
+    CONTROLLER_ADDR_MAIN, CONTROLLER_ADDR_MAIN,
+    MEGAROVER3_REG_BATTERYVOLTAGE,
+    MEGAROVER3_REG_SPEED_X, MEGAROVER3_REG_SPEED_Y, MEGAROVER3_REG_ROTATION, ROVER_REG_ENABLEMOTORS,
+    ROVER_REG_SYSTEMNAME, ROVER_REG_FIRMWAREREVISION, ROVER_REG_UPTIME,
+    0x00, 0x00,
+    0x00, 0x00,
+    0x00, 0x00,
+    0x00, 0x00,
+    0x00, 0x00,
+    0x00, 0x00,
+    0x00, 0x00,
+    MEGAROVER3_REG_ENCODERVALUE0, MEGAROVER3_REG_ENCODERVALUE1
 };
 
 int conv_int16_to_int32(int int16) {
@@ -408,7 +420,7 @@ unsigned int rover_get_controller_addr(struct roverstruct *rover, unsigned int c
             break;
         case 0:
         default:
-            controller_addr = DEFAULT_CONTROLLER_ADDR;
+            controller_addr = CONTROLLER_ADDR_DEFAULT;
     }
 
     return controller_addr;
@@ -446,7 +458,7 @@ unsigned char rover_identify(struct roverstruct *rover) {
 
     int ret;
 
-    ret = rover_read_full_memmap(rover->memmap_main, DEFAULT_CONTROLLER_ADDR, rover);
+    ret = rover_read_full_memmap(rover->memmap_main, CONTROLLER_ADDR_DEFAULT, rover);
     if (ret < 0) {
         return ret;
     } else {
@@ -457,17 +469,17 @@ unsigned char rover_identify(struct roverstruct *rover) {
 
 unsigned char rover_identify_from_main_memmap(struct roverstruct *rover) {
 
-    rover->sysname = rover_get_sysname(rover->memmap_main);
-    rover->firmrev = rover_get_firmrev(rover->memmap_main);
+    rover->sysname = rover_get_sysname(rover);
+    rover->firmrev = rover_get_firmrev(rover);
 
     switch (rover->sysname) {
-        case 0x21:
+        case SYSNAME_MECANUMROVER21:
             strcpy(rover->fullname, "MecanumRover V2.1\0");
             rover->config = (struct rover_config *)&rover_config_mecanumrover21;
             rover->regs = (struct rover_regs *)&rover_regs_mecanumrover21;
             return 0;
 
-        case 0x30:
+        case SYSNAME_MEGAROVER3:
             strcpy(rover->fullname, "MegaRover V3\0");
             rover->config = (struct rover_config *)&rover_config_megarover3;
             rover->regs = (struct rover_regs *)&rover_regs_megarover3;
@@ -483,36 +495,32 @@ unsigned char rover_identify_from_main_memmap(struct roverstruct *rover) {
 
 
 // extract values from previously read memmap
-int    rover_get_sysname(unsigned char *memmap)            { return read_register_from_memmap(memmap, ROVER_REG_SYSTEMNAME, 2); }
-int    rover_get_firmrev(unsigned char *memmap)            { return read_register_from_memmap(memmap, ROVER_REG_FIRMWAREREVISION, 2); }
-double rover_get_uptime(unsigned char *memmap)             { return read_register_from_memmap(memmap, ROVER_REG_UPTIME, 4)/1000.0; }
+int    rover_get_sysname(struct roverstruct *rover)         { return read_register_from_memmap(rover->memmap_main, rover->regs->systemname, 2); }
+int    rover_get_firmrev(struct roverstruct *rover)         { return read_register_from_memmap(rover->memmap_main, rover->regs->firmwarerevision, 2); }
+double rover_get_uptime(struct roverstruct *rover)          { return read_register_from_memmap(rover->memmap_main, rover->regs->uptime, 4) / 1000.0; }
+double rover_get_battery_voltage(struct roverstruct *rover) { return (read_register_from_memmap(rover->memmap_main, rover->regs->batteryvoltage, 2) / 4095.0) * 29.7; } // 29.7V = 0x0FFF
+int    rover_get_X_speed(struct roverstruct *rover)         { return conv_int16_to_int32(read_register_from_memmap(rover->memmap_main, rover->regs->speed_x, 2)); }
+int    rover_get_Y_speed(struct roverstruct *rover)         { return conv_int16_to_int32(read_register_from_memmap(rover->memmap_main, rover->regs->speed_y, 2)); }
+int    rover_get_rotation_speed(struct roverstruct *rover)  { return conv_int16_to_int32(read_register_from_memmap(rover->memmap_main, rover->regs->rotation, 2)); }
 
-unsigned char rover_get_motor_status(unsigned char *memmap)       { return read_register_from_memmap(memmap, ROVER_REG_ENABLEMOTORS, 1); }
+unsigned char rover_get_motor_status(struct roverstruct *rover, unsigned char *memmap)     { return read_register_from_memmap(memmap, rover->regs->enablemotors, 1); }
+int    rover_get_outputoffset0(struct roverstruct *rover, unsigned char *memmap)           { return conv_int16_to_int32(read_register_from_memmap(memmap, rover->regs->outputoffset0, 2)); }
+int    rover_get_outputoffset1(struct roverstruct *rover, unsigned char *memmap)           { return conv_int16_to_int32(read_register_from_memmap(memmap, rover->regs->outputoffset1, 2)); }
+double rover_get_max_current0(struct roverstruct *rover, unsigned char *memmap)            { return (read_register_from_memmap(memmap, rover->regs->maxcurrent0, 2)/ 4096.0) * 11.58; } // 0x1000 = 11.58A
+double rover_get_max_current1(struct roverstruct *rover, unsigned char *memmap)            { return (read_register_from_memmap(memmap, rover->regs->maxcurrent1, 2)/ 4096.0) * 11.58; } // 0x1000 = 11.58A
+double rover_get_current_limit0(struct roverstruct *rover, unsigned char *memmap)          { return (read_register_from_memmap(memmap, rover->regs->currentlimit0, 2)/ 4096.0) * 11.58; } // 0x1000 = 11.58A
+double rover_get_current_limit1(struct roverstruct *rover, unsigned char *memmap)          { return (read_register_from_memmap(memmap, rover->regs->currentlimit1, 2)/ 4096.0) * 11.58; } // 0x1000 = 11.58A
+int    rover_get_measured_position0(struct roverstruct *rover, unsigned char *memmap)      { return read_register_from_memmap(memmap, rover->regs->measuredpos0, 4); }
+int    rover_get_measured_position1(struct roverstruct *rover, unsigned char *memmap)      { return read_register_from_memmap(memmap, rover->regs->measuredpos1, 4); }
+int    rover_get_speed0(struct roverstruct *rover, unsigned char *memmap)                  { return conv_int16_to_int32(read_register_from_memmap(memmap, rover->regs->speed0, 2)); }
+int    rover_get_speed1(struct roverstruct *rover, unsigned char *memmap)                  { return conv_int16_to_int32(read_register_from_memmap(memmap, rover->regs->speed1, 2)); }
+double rover_get_motoroutput_calc0(struct roverstruct *rover, unsigned char *memmap)       { return (conv_int16_to_int32(read_register_from_memmap(memmap, rover->regs->motoroutputcalc0, 2)) / 4096.0) * 100; } // 100% = 0x1000
+double rover_get_motoroutput_calc1(struct roverstruct *rover, unsigned char *memmap)       { return (conv_int16_to_int32(read_register_from_memmap(memmap, rover->regs->motoroutputcalc1, 2)) / 4096.0) * 100; } // 100% = 0x1000
+int    rover_get_encoder_value0(struct roverstruct *rover, unsigned char *memmap)          { return read_register_from_memmap(memmap, rover->regs->encodervalue0, 4); }
+int    rover_get_encoder_value1(struct roverstruct *rover, unsigned char *memmap)          { return read_register_from_memmap(memmap, rover->regs->encodervalue1, 4); }
+double rover_get_measured_current_value0(struct roverstruct *rover, unsigned char *memmap) { return (read_register_from_memmap(memmap, rover->regs->measuredcurrent0, 2) / 4096.0) * 11.58; } // 0x1000 = 11.58A
+double rover_get_measured_current_value1(struct roverstruct *rover, unsigned char *memmap) { return (read_register_from_memmap(memmap, rover->regs->measuredcurrent1, 2) / 4096.0) * 11.58; } // 0x1000 = 11.58A
 
-int    rover_get_outputoffset0(unsigned char *memmap)      { return conv_int16_to_int32(read_register_from_memmap(memmap, ROVER_REG_OUTPUTOFFSET0, 2)); }
-int    rover_get_outputoffset1(unsigned char *memmap)      { return conv_int16_to_int32(read_register_from_memmap(memmap, ROVER_REG_OUTPUTOFFSET1, 2)); }
-double rover_get_max_current0(unsigned char *memmap)       { return (read_register_from_memmap(memmap, ROVER_REG_MAXCURRENT0, 2)/4096.0)*11.58; } // 0x1000 = 11.58A
-double rover_get_max_current1(unsigned char *memmap)       { return (read_register_from_memmap(memmap, ROVER_REG_MAXCURRENT1, 2)/4096.0)*11.58; } // 0x1000 = 11.58A
-double rover_get_current_limit0(unsigned char *memmap)     { return (read_register_from_memmap(memmap, ROVER_REG_CURRENTLIMIT0, 2)/4096.0)*11.58; } // 0x1000 = 11.58A
-double rover_get_current_limit1(unsigned char *memmap)     { return (read_register_from_memmap(memmap, ROVER_REG_CURRENTLIMIT1, 2)/4096.0)*11.58; } // 0x1000 = 11.58A
-int    rover_get_measured_position0(unsigned char *memmap) { return read_register_from_memmap(memmap, ROVER_REG_MEASUREDPOS0, 4); }
-int    rover_get_measured_position1(unsigned char *memmap) { return read_register_from_memmap(memmap, ROVER_REG_MEASUREDPOS1, 4); }
-int    rover_get_speed0(unsigned char *memmap)             { return conv_int16_to_int32(read_register_from_memmap(memmap, ROVER_REG_SPEED0, 2)); }
-int    rover_get_speed1(unsigned char *memmap)             { return conv_int16_to_int32(read_register_from_memmap(memmap, ROVER_REG_SPEED1, 2)); }
-
-double rover_get_motoroutput_calc0(unsigned char *memmap)  { return (conv_int16_to_int32(read_register_from_memmap(memmap, ROVER_REG_MOTOROUTPUTCALC0, 2))/4096.0)*100; } // 100% = 0x1000
-double rover_get_motoroutput_calc1(unsigned char *memmap)  { return (conv_int16_to_int32(read_register_from_memmap(memmap, ROVER_REG_MOTOROUTPUTCALC1, 2))/4096.0)*100; } // 100% = 0x1000
-
-double rover_get_battery_voltage(unsigned char *memmap)    { return (read_register_from_memmap(memmap, ROVER_REG_BATTERYVOLTAGE, 2)/4095.0)*29.7; } // 29.7V = 0x0FFF
-int    rover_get_encoder_value0(unsigned char *memmap)     { return read_register_from_memmap(memmap, ROVER_REG_ENCODERVALUE0, 4); }
-int    rover_get_encoder_value1(unsigned char *memmap)     { return read_register_from_memmap(memmap, ROVER_REG_ENCODERVALUE1, 4); }
-
-double rover_get_measured_current_value0(unsigned char *memmap) { return (read_register_from_memmap(memmap, ROVER_REG_MEASUREDCURRENT0, 2)/4096.0)*11.58; } // 0x1000 = 11.58A
-double rover_get_measured_current_value1(unsigned char *memmap) { return (read_register_from_memmap(memmap, ROVER_REG_MEASUREDCURRENT1, 2)/4096.0)*11.58; } // 0x1000 = 11.58A
-
-int    rover_get_X_speed(unsigned char *memmap)        { return conv_int16_to_int32(read_register_from_memmap(memmap, ROVER_REG_SPEED_X, 2)); }
-int    rover_get_Y_speed(unsigned char *memmap)        { return conv_int16_to_int32(read_register_from_memmap(memmap, ROVER_REG_SPEED_Y, 2)); }
-int    rover_get_rotation_speed(unsigned char *memmap) { return conv_int16_to_int32(read_register_from_memmap(memmap, ROVER_REG_ROTATION, 2)); }
 
 // write commands
 int rover_enable_motors( struct roverstruct *rover, unsigned char controller_addr, unsigned char *reply) { return rover_write_register_uint8(controller_addr, rover->regs->enablemotors, rover->config->enablemotors_on,  reply); }

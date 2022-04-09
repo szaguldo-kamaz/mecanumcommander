@@ -13,54 +13,58 @@
 #define __MECACOMLIB_H__
 
 // to use the FTDI USB-UART on the robot controller
-#define DEVFILE         "/dev/ttyUSB0"
-#define BAUDRATE        B115200
+#define DEVFILE          "/dev/ttyUSB0"
+#define BAUDRATE         B115200
 // to use Raspberry Pi4's UART directly connected to the robot controller's UART (bypassing the FTDI chip - needs HW mod)
-//#define DEVFILE         "/dev/ttyAMA1"
-//#define BAUDRATE        B19200
+//#define DEVFILE          "/dev/ttyAMA1"
+//#define BAUDRATE         B19200
 
-#define BUFFER_SIZE     1024
+#define BUFFER_SIZE      1024
 
 // max speeds for the rover
-#define LIMIT_SPEED_X   2100  // mm/sec
-#define LIMIT_SPEED_Y   2100  // mm/sec
-#define LIMIT_SPEED_ROT 8000  // mrad/sec
+#define LIMIT_SPEED_X    2100  // mm/sec
+#define LIMIT_SPEED_Y    2100  // mm/sec
+#define LIMIT_SPEED_ROT  8000  // mrad/sec
 
-#define DEFAULT_CONTROLLER_ADDR     0x10
-#define ROVER_CONTROLLER_ADDR_REAR  0x10
-#define ROVER_CONTROLLER_ADDR_FRONT 0x1F
+#define SYSNAME_MECANUMROVER21      0x21
+#define SYSNAME_MEGAROVER3          0x30
 
-#define MEGAROVER3_CONTROLLER_ADDR  0x10
+#define CONTROLLER_ADDR_DEFAULT     0x10
+#define CONTROLLER_ADDR_MAIN        0x10
+#define CONTROLLER_ADDR_SECOND      0x1F
 
 #define ROVER_REG_SYSTEMNAME        0x00
 #define ROVER_REG_FIRMWAREREVISION  0x02
 #define ROVER_REG_UPTIME            0x04
 #define ROVER_REG_ENABLEMOTORS      0x10
-#define ROVER_REG_OUTPUTOFFSET0     0x50
-#define ROVER_REG_OUTPUTOFFSET1     0x52
-#define ROVER_REG_MAXCURRENT0       0x58
-#define ROVER_REG_MAXCURRENT1       0x5A
-#define ROVER_REG_CURRENTLIMIT0     0x5C
-#define ROVER_REG_CURRENTLIMIT1     0x5E
-#define ROVER_REG_MEASUREDPOS0      0x60
-#define ROVER_REG_MEASUREDPOS1      0x64
-#define ROVER_REG_SPEED0            0x68
-#define ROVER_REG_SPEED1            0x6A
-#define ROVER_REG_MOTOROUTPUTCALC0  0x6C
-#define ROVER_REG_MOTOROUTPUTCALC1  0x6E
-#define ROVER_REG_BATTERYVOLTAGE    0x90
-#define ROVER_REG_ENCODERVALUE0     0x98
-#define ROVER_REG_ENCODERVALUE1     0x9C
-#define ROVER_REG_MEASUREDCURRENT0  0xA0
-#define ROVER_REG_MEASUREDCURRENT1  0xA2
-#define ROVER_REG_SPEED_X           0xC0
-#define ROVER_REG_SPEED_Y           0xC2
-#define ROVER_REG_ROTATION          0xC4
 
-#define MEGAROVER3_REG_BATTERYVOLTAGE   0x82
-#define MEGAROVER3_REG_SPEED_X          0x90
-#define MEGAROVER3_REG_SPEED_Y          0x92 // unused
-#define MEGAROVER3_REG_ROTATION         0x94
+#define MECANUMROVER21_REG_OUTPUTOFFSET0     0x50
+#define MECANUMROVER21_REG_OUTPUTOFFSET1     0x52
+#define MECANUMROVER21_REG_MAXCURRENT0       0x58
+#define MECANUMROVER21_REG_MAXCURRENT1       0x5A
+#define MECANUMROVER21_REG_CURRENTLIMIT0     0x5C
+#define MECANUMROVER21_REG_CURRENTLIMIT1     0x5E
+#define MECANUMROVER21_REG_MEASUREDPOS0      0x60
+#define MECANUMROVER21_REG_MEASUREDPOS1      0x64
+#define MECANUMROVER21_REG_SPEED0            0x68
+#define MECANUMROVER21_REG_SPEED1            0x6A
+#define MECANUMROVER21_REG_MOTOROUTPUTCALC0  0x6C
+#define MECANUMROVER21_REG_MOTOROUTPUTCALC1  0x6E
+#define MECANUMROVER21_REG_BATTERYVOLTAGE    0x90
+#define MECANUMROVER21_REG_ENCODERVALUE0     0x98
+#define MECANUMROVER21_REG_ENCODERVALUE1     0x9C
+#define MECANUMROVER21_REG_MEASUREDCURRENT0  0xA0
+#define MECANUMROVER21_REG_MEASUREDCURRENT1  0xA2
+#define MECANUMROVER21_REG_SPEED_X           0xC0
+#define MECANUMROVER21_REG_SPEED_Y           0xC2
+#define MECANUMROVER21_REG_ROTATION          0xC4
+
+#define MEGAROVER3_REG_ENCODERVALUE0         0x50
+#define MEGAROVER3_REG_ENCODERVALUE1         0x54
+#define MEGAROVER3_REG_BATTERYVOLTAGE        0x82
+#define MEGAROVER3_REG_SPEED_X               0x90
+#define MEGAROVER3_REG_SPEED_Y               0x92 // unused
+#define MEGAROVER3_REG_ROTATION              0x94
 
 
 struct rover_config {
@@ -113,7 +117,7 @@ struct roverstruct {
     unsigned  int rs485_err_0x10;
     unsigned  int rs485_err_0x1F;
     unsigned char memmap_main[512];
-    unsigned char memmap_front[512];
+    unsigned char memmap_second[512];
     unsigned char fullname[32];
     double uptime_sec;
     double battery_voltage;
@@ -183,30 +187,32 @@ unsigned char rover_identify(struct roverstruct *rover);
 unsigned char rover_identify_from_main_memmap(struct roverstruct *rover);
 
 // get values from previously read memmap
-int    rover_get_sysname(unsigned char *memmap);
-int    rover_get_firmrev(unsigned char *memmap);
-double rover_get_uptime(unsigned char *memmap);
-unsigned char rover_get_motor_status(unsigned char *memmap);
-int    rover_get_outputoffset0(unsigned char *memmap);
-int    rover_get_outputoffset1(unsigned char *memmap);
-double rover_get_max_current0(unsigned char *memmap);
-double rover_get_max_current1(unsigned char *memmap);
-double rover_get_current_limit0(unsigned char *memmap);
-double rover_get_current_limit1(unsigned char *memmap);
-int    rover_get_measured_position0(unsigned char *memmap);
-int    rover_get_measured_position1(unsigned char *memmap);
-int    rover_get_speed0(unsigned char *memmap);
-int    rover_get_speed1(unsigned char *memmap);
-double rover_get_motoroutput_calc0(unsigned char *memmap);
-double rover_get_motoroutput_calc1(unsigned char *memmap);
-double rover_get_battery_voltage(unsigned char *memmap);
-int    rover_get_encoder_value0(unsigned char *memmap);
-int    rover_get_encoder_value1(unsigned char *memmap);
-double rover_get_measured_current_value0(unsigned char *memmap);
-double rover_get_measured_current_value1(unsigned char *memmap);
-int    rover_get_X_speed(unsigned char *memmap);
-int    rover_get_Y_speed(unsigned char *memmap);
-int    rover_get_rotation_speed(unsigned char *memmap);
+
+int    rover_get_sysname(struct roverstruct *rover);
+int    rover_get_firmrev(struct roverstruct *rover);
+double rover_get_uptime(struct roverstruct *rover);
+double rover_get_battery_voltage(struct roverstruct *rover);
+int    rover_get_X_speed(struct roverstruct *rover);
+int    rover_get_Y_speed(struct roverstruct *rover);
+int    rover_get_rotation_speed(struct roverstruct *rover);
+
+unsigned char rover_get_motor_status(struct roverstruct *rover, unsigned char *memmap);
+int    rover_get_outputoffset0(struct roverstruct *rover, unsigned char *memmap);
+int    rover_get_outputoffset1(struct roverstruct *rover, unsigned char *memmap);
+double rover_get_max_current0(struct roverstruct *rover, unsigned char *memmap);
+double rover_get_max_current1(struct roverstruct *rover, unsigned char *memmap);
+double rover_get_current_limit0(struct roverstruct *rover, unsigned char *memmap);
+double rover_get_current_limit1(struct roverstruct *rover, unsigned char *memmap);
+int    rover_get_measured_position0(struct roverstruct *rover, unsigned char *memmap);
+int    rover_get_measured_position1(struct roverstruct *rover, unsigned char *memmap);
+int    rover_get_speed0(struct roverstruct *rover, unsigned char *memmap);
+int    rover_get_speed1(struct roverstruct *rover, unsigned char *memmap);
+double rover_get_motoroutput_calc0(struct roverstruct *rover, unsigned char *memmap);
+double rover_get_motoroutput_calc1(struct roverstruct *rover, unsigned char *memmap);
+int    rover_get_encoder_value0(struct roverstruct *rover, unsigned char *memmap);
+int    rover_get_encoder_value1(struct roverstruct *rover, unsigned char *memmap);
+double rover_get_measured_current_value0(struct roverstruct *rover, unsigned char *memmap);
+double rover_get_measured_current_value1(struct roverstruct *rover, unsigned char *memmap);
 
 // write commands
 int rover_enable_motors( struct roverstruct *rover, unsigned char controller_addr, unsigned char *reply);
