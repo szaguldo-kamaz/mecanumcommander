@@ -424,7 +424,6 @@ int rover_read_full_memmap(unsigned char *memmap, unsigned int controller_addr, 
             if (ret ==  0) { break; }
             if (ret == -2) { return -2; }
         }
-        offset += 0x40;
     }
 
     for (ret = 0; replyfull[ret] != 'X'; ret++) { memmap[ret] = replyfull[ret]; }
