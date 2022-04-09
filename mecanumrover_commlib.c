@@ -209,47 +209,50 @@ int send_command_raw(unsigned char *message, unsigned char messagelen, unsigned 
 
 
 // hexstring->endianness->num
-int read_register_from_memmap(unsigned char *memmap, unsigned char addr, unsigned char reglen) {
+int read_register_from_memmap(unsigned char *memmap, unsigned char register_addr, unsigned char register_length) {
 
     unsigned char reply[16];
-    int regvalue, ret;
+    int register_value, ret;
 
-    if ( (reglen != 1) && (reglen != 2) && (reglen != 4) ) {
-        printf("read_register_from_memmap(addr:0x%x): Invalid length value (%d)! Valid reglen values are: 1, 2, 4.\n", addr, reglen);
+    if ( (register_length != 1) && (register_length != 2) && (register_length != 4) ) {
+        printf("read_register_from_memmap(register_addr:0x%x): Invalid length value (%d)! Valid register_length values are: 1, 2, 4.\n", register_addr, register_length);
         return -1; // -1 is ok here, because this is the programmer's mistake...
     }
 
-    if (reglen == 1) {
-        reply[0] = memmap[addr*2+0];
-        reply[1] = memmap[addr*2+1];
-        reply[2] = 0;
-    } else {
-        if (reglen == 2) {
-            reply[0] = memmap[addr*2+2];
-            reply[1] = memmap[addr*2+3];
-            reply[2] = memmap[addr*2+0];
-            reply[3] = memmap[addr*2+1];
+    switch (register_length) {
+
+        case 1:
+            reply[0] = memmap[register_addr*2+0];
+            reply[1] = memmap[register_addr*2+1];
+            reply[2] = 0;
+            break;
+
+        case 2:
+            reply[0] = memmap[register_addr*2+2];
+            reply[1] = memmap[register_addr*2+3];
+            reply[2] = memmap[register_addr*2+0];
+            reply[3] = memmap[register_addr*2+1];
             reply[4] = 0;
-        } else {
-            if (reglen == 4) {
-                reply[0] = memmap[addr*2+6];
-                reply[1] = memmap[addr*2+7];
-                reply[2] = memmap[addr*2+4];
-                reply[3] = memmap[addr*2+5];
-                reply[4] = memmap[addr*2+2];
-                reply[5] = memmap[addr*2+3];
-                reply[6] = memmap[addr*2+0];
-                reply[7] = memmap[addr*2+1];
-                reply[8] = 0;
-            }
-        }
+            break;
+
+        case 4:
+            reply[0] = memmap[register_addr*2+6];
+            reply[1] = memmap[register_addr*2+7];
+            reply[2] = memmap[register_addr*2+4];
+            reply[3] = memmap[register_addr*2+5];
+            reply[4] = memmap[register_addr*2+2];
+            reply[5] = memmap[register_addr*2+3];
+            reply[6] = memmap[register_addr*2+0];
+            reply[7] = memmap[register_addr*2+1];
+            reply[8] = 0;
+            break;
     }
 
-    ret = sscanf(reply, "%x", &regvalue);
+    ret = sscanf(reply, "%x", &register_value);
     if (ret != 1) {
         return -1;
     } else {
-        return regvalue;
+        return register_value;
     }
 
 }
@@ -551,7 +554,7 @@ int rover_kset_XYrotation_speed(int xspeed, int yspeed, int rotspeed, unsigned c
     if (  yspeed < -LIMIT_SPEED_Y)   { yspeed   = -LIMIT_SPEED_Y;   }
     if (rotspeed < -LIMIT_SPEED_ROT) { rotspeed = -LIMIT_SPEED_ROT; }
 
-    rotspeed/=4;
+    rotspeed /= 4;
 
     if (xspeed   < 0) { xspeed   = 0xFFFF - abs(xspeed);   }
     if (yspeed   < 0) { yspeed   = 0xFFFF - abs(yspeed);   }

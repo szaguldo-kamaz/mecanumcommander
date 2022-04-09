@@ -161,14 +161,14 @@ int check_and_remove_readey(unsigned char *message); // readey (sic!)
 // serial port - transmit
 int send_command_raw(unsigned char *message, unsigned char messagelen, unsigned char *reply);
 // hexstring->endianness->num
-int read_register_from_memmap(unsigned char *memmap, unsigned char addr, unsigned char reglen);
+int read_register_from_memmap(unsigned char *memmap, unsigned char register_addr, unsigned char register_length);
 // read only 1 register, and update it in the memmap
-int rover_read_register(unsigned char id, unsigned char addr, unsigned char length, unsigned char *memmap, struct roverstruct *rover);
+int rover_read_register(unsigned char controller_addr, unsigned char register_addr, unsigned char length, unsigned char *memmap, struct roverstruct *rover);
 
-int rover_write_register_uint8(unsigned char id, unsigned char addr, unsigned char data, unsigned char *reply);
-int rover_write_register_uint16(unsigned char id, unsigned char addr, unsigned int data, unsigned char *reply);
-int rover_write_register_int16(unsigned char id, unsigned char addr, int data, unsigned char *reply);
-int rover_write_register_uint32(unsigned char id, unsigned char addr, unsigned int data, unsigned char *reply);
+int rover_write_register_uint8(unsigned char controller_addr, unsigned char register_addr, unsigned char data, unsigned char *reply);
+int rover_write_register_uint16(unsigned char controller_addr, unsigned char register_addr, unsigned int data, unsigned char *reply);
+int rover_write_register_int16(unsigned char controller_addr, unsigned char register_addr, int data, unsigned char *reply);
+int rover_write_register_uint32(unsigned char controller_addr, unsigned char register_addr, unsigned int data, unsigned char *reply);
 int rover_read_full_memmap(unsigned char *memmap, unsigned int controller_addr, struct roverstruct *rover);
 
 unsigned int rover_get_controller_addr(struct roverstruct *rover, unsigned int controller_id);
