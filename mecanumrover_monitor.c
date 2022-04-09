@@ -25,7 +25,7 @@ int main() {
 
     ret = rover_read_full_memmap(rover.memmap_main, ROVER_CONTROLLER_ADDR_REAR, &rover);
 
-    if (rover_identify(&rover, rover.memmap_main) == 1) {
+    if (rover_identify(&rover) == 1) {
         printf("Unknown rover!\n");
         exit(1);
     }

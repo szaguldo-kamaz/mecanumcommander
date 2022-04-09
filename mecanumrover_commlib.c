@@ -17,6 +17,33 @@
 #include "mecanumrover_commlib.h"
 
 
+const struct rover_regs rover_regs_unknown = {
+    0x10, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x02, 0x04,
+    0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+const struct rover_regs rover_regs_mecanumrover21 = {
+    0x10, 0x1F,
+    0x90, 0xC0, 0xC2, 0xC4, 0x10,
+    0x00, 0x02, 0x04,
+    0x50, 0x52, 0x6C, 0x6E,
+    0x58, 0x5A, 0x5C, 0x5E, 0xA0, 0xA2,
+    0x60, 0x64, 0x68, 0x6A, 0x98, 0x9C
+};
+
+const struct rover_regs rover_regs_megarover3 = {
+    0x10, 0x10,
+    0x82, 0x90, 0x92, 0x94, 0x10,
+    0x00, 0x02, 0x04,
+    0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x50, 0x54
+};
+
 int conv_int16_to_int32(int int16) {
     if (int16 > 32767) { int16 = int16 - 65536; }
     return int16;
@@ -386,6 +413,26 @@ int rover_write_register_int16(unsigned char id, unsigned char addr, int data, u
 }
 
 
+unsigned int rover_get_controller_addr(struct roverstruct *rover, unsigned int controller_id) {
+
+    unsigned char controller_addr;
+
+    switch (controller_id) {
+        case 1:
+            controller_addr = rover->regs->controller_addr_main;
+            break;
+        case 2:
+            controller_addr = rover->regs->controller_addr_second;
+            break;
+        case 0:
+        default:
+            controller_addr = ROVER_CONTROLLER_ADDR_MAIN;
+    }
+
+    return controller_addr;
+}
+
+
 int rover_read_full_memmap(unsigned char *memmap, unsigned int controller_id, struct roverstruct *rover) {
     int ret, datalen, i;
     unsigned char replyfull[512];
@@ -420,24 +467,35 @@ int rover_read_full_memmap(unsigned char *memmap, unsigned int controller_id, st
 }
 
 
-unsigned char rover_identify(struct roverstruct *rover, unsigned char *memmap) {
-    rover->sysname = rover_get_sysname(memmap);
-    rover->firmrev = rover_get_firmrev(memmap);
+unsigned char rover_identify(struct roverstruct *rover) {
+
+    int ret;
+
+    ret = rover_read_full_memmap(rover->memmap_main, 0, rover);
+
+    rover->sysname = rover_get_sysname(rover->memmap_main);
+    rover->firmrev = rover_get_firmrev(rover->memmap_main);
+
     switch (rover->sysname) {
         case 0x21:
             strcpy(rover->fullname, "MecanumRover V2.1\0");
             rover->has_second_controller = 1;
             rover->has_Y_speed = 1;
             rover->motor_count = 4;
+            rover->regs = (struct rover_regs *)&rover_regs_mecanumrover21;
             return 0;
+
         case 0x30:
             strcpy(rover->fullname, "MegaRover V3\0");
             rover->has_second_controller = 0;
             rover->has_Y_speed = 0;
             rover->motor_count = 2;
+            rover->regs = (struct rover_regs *)&rover_regs_megarover3;
             return 0;
+
         default:
             strcpy(rover->fullname, "UNKNOWN\0");
+            rover->regs = (struct rover_regs *)&rover_regs_unknown;
             return 1;
     }
 }

@@ -22,6 +22,7 @@
 #define LIMIT_SPEED_Y   2100  // mm/sec
 #define LIMIT_SPEED_ROT 8000  // mrad/sec
 
+#define ROVER_CONTROLLER_ADDR_MAIN  0x10
 #define ROVER_CONTROLLER_ADDR_REAR  0x10
 #define ROVER_CONTROLLER_ADDR_FRONT 0x1F
 
@@ -54,11 +55,46 @@
 
 #define MEGAROVER3_REG_BATTERYVOLTAGE   0x82
 #define MEGAROVER3_REG_SPEED_X          0x90
-#define MEGAROVER3_REG_SPEED_Y          0x92
+#define MEGAROVER3_REG_SPEED_Y          0x92 // unused
 #define MEGAROVER3_REG_ROTATION         0x94
 
 
+struct rover_regs {
+    unsigned char controller_addr_main;
+    unsigned char controller_addr_second;
+
+    unsigned char batteryvoltage;
+    unsigned char speed_x;
+    unsigned char speed_y;
+    unsigned char rotation;
+    unsigned char enablemotors;
+
+    unsigned char systemname;
+    unsigned char firmwarerevision;
+    unsigned char uptime;
+
+    unsigned char outputoffset0;
+    unsigned char outputoffset1;
+    unsigned char motoroutputcalc0;
+    unsigned char motoroutputcalc1;
+
+    unsigned char maxcurrent0;
+    unsigned char maxcurrent1;
+    unsigned char currentlimit0;
+    unsigned char currentlimit1;
+    unsigned char measuredcurrent0;
+    unsigned char measuredcurrent1;
+
+    unsigned char measuredpos0;
+    unsigned char measuredpos1;
+    unsigned char speed0;
+    unsigned char speed1;
+    unsigned char encodervalue0;
+    unsigned char encodervalue1;
+};
+
 struct roverstruct {
+    struct rover_regs *regs;
     unsigned  int sysname;
     unsigned  int firmrev;
     unsigned char has_second_controller;
@@ -131,7 +167,9 @@ int rover_write_register_int16(unsigned char id, unsigned char addr, int data, u
 int rover_write_register_uint32(unsigned char id, unsigned char addr, unsigned int data, unsigned char *reply);
 int rover_read_full_memmap(unsigned char *memmap, unsigned int controller_id, struct roverstruct *rover);
 
-unsigned char rover_identify(struct roverstruct *rover, unsigned char *memmap);
+unsigned int rover_get_controller_addr(struct roverstruct *rover, unsigned int controller_id);
+
+unsigned char rover_identify(struct roverstruct *rover);
 
 // get values from previously read memmap
 int    rover_get_sysname(unsigned char *memmap);

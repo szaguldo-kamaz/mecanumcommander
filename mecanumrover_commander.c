@@ -142,7 +142,7 @@ int main() {
         }
     }
 
-    if (rover_identify(&rover, rover.memmap_main) == 0) {
+    if (rover_identify(&rover) == 0) {
         printf("Rover found: 0x%x:%s FWRev: 0x%x\n", rover.sysname, rover.fullname, rover.firmrev);
     } else {
         printf("Unknown rover type: 0x%X!\n", rover.sysname);
@@ -264,8 +264,10 @@ int main() {
     if (dummymode == 0) {
         printf("Enabling motors on main controller.\n");
         rover_enable_motors_main(answer);
-        printf("Enabling motors on front controller.\n");
-        rover_enable_motors_front(answer);
+        if (rover.has_second_controller == 1) {
+            printf("Enabling motors on front controller.\n");
+            rover_enable_motors_front(answer);
+        }
     }
 
     // ncurses init
@@ -372,6 +374,7 @@ int main() {
                 attroff(COLOR_PAIR(5) | A_BOLD);
                 refresh();
 
+                // when using memmapupdate_via_wifi.sh
                 if (readmemmapfromfile == 1) {
                     fd = open("memmap_0x10.dat", O_RDONLY);
                     if (fd != -1) {
@@ -407,28 +410,30 @@ int main() {
                         quit = 3;
                         break;
                     }
-                    ret = rover_read_full_memmap(rover.memmap_front, ROVER_CONTROLLER_ADDR_FRONT, &rover);
-                    if (ret == -2) {
-                        if (dummymode == 0) {
-                            commandsend_lamp_on();
-                            stoprobot(usekcommands, answer);
-                            commandsend_lamp_off();
+                    if (rover.has_second_controller == 1) {
+                        ret = rover_read_full_memmap(rover.memmap_front, ROVER_CONTROLLER_ADDR_FRONT, &rover);
+                        if (ret == -2) {
+                            if (dummymode == 0) {
+                                commandsend_lamp_on();
+                                stoprobot(usekcommands, answer);
+                                commandsend_lamp_off();
+                            }
+                            errormsg("Fatal error, while reading front memmap! Press a key to quit!", 5);
+                            quit = 2;
+                            break;
                         }
-                        errormsg("Fatal error, while reading front memmap! Press a key to quit!",5);
-                        quit = 2;
-                        break;
-                    }
-                    if (ret != 384) {
-                        unsigned char errmsg[256];
-                        if (dummymode == 0) {
-                            commandsend_lamp_on();
-                            stoprobot(usekcommands, answer);
-                            commandsend_lamp_off();
+                        if (ret != 384) {
+                            unsigned char errmsg[256];
+                            if (dummymode == 0) {
+                                commandsend_lamp_on();
+                                stoprobot(usekcommands, answer);
+                                commandsend_lamp_off();
+                            }
+                            sprintf(errmsg, "Failed to read front memmap correctly (invalid length: %d). Press a key to quit!", ret);
+                            errormsg(errmsg, 1);
+                            quit = 3;
+                            break;
                         }
-                        sprintf(errmsg, "Failed to read front memmap correctly (invalid length: %d). Press a key to quit!", ret);
-                        errormsg(errmsg, 1);
-                        quit = 3;
-                        break;
                     }
                 }
 
