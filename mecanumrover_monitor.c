@@ -1,5 +1,5 @@
 /*
-    NLAB-MecanumCommlib for Linux, a simple library to control VStone MecanumRover 2.1
+    NLAB-MecanumCommlib for Linux, a simple library to control VStone MecanumRover 2.1 / VStone MegaRover 3
     by David Vincze, vincze.david@webcode.hu
     at Human-System Laboratory, Chuo University, Tokyo, Japan, 2021
     version 0.40
@@ -17,46 +17,35 @@
 int main() {
 
     int ret, i=0;
-    double rover_uptime_sec, rover_battery_voltage;
-    int rover_sysname, rover_firmrev, rover_main_motor_status, rover_front_motor_status;
-
     unsigned char answer[BUFFER_SIZE];
     struct roverstruct rover;
-
-    ret = rover_read_full_memmap(rover.memmap_main, ROVER_CONTROLLER_ADDR_REAR, &rover);
 
     if (rover_identify(&rover) == 1) {
         printf("Unknown rover!\n");
         exit(1);
     }
 
-    rover_uptime_sec = rover_get_uptime(rover.memmap_main);
-    rover_battery_voltage = rover_get_battery_voltage(rover.memmap_main);
-    rover_main_motor_status = rover_get_motor_status(rover.memmap_main);
-
     printf("Rover ID: 0x%x Firmware rev: 0x%x Uptime: %lf sec Battery: %lf V \n",
-            rover.sysname, rover.firmrev, rover_uptime_sec, rover_battery_voltage);
+            rover.sysname, rover.firmrev, rover_get_uptime(&rover), rover_get_battery_voltage(&rover));
 
+    // rover_identify have already read memmap_main
     if (rover.config->has_second_controller == 1) {
-        ret = rover_read_full_memmap(rover.memmap_front, ROVER_CONTROLLER_ADDR_FRONT, &rover);
-        rover_front_motor_status = rover_get_motor_status(rover.memmap_front);
+        ret = rover_read_full_memmap(rover.memmap_second, rover.regs->controller_addr_second, &rover);
     }
 
-    if (rover.config->motor_count == 2) {
-        printf("Motor status: %d\n", rover_main_motor_status);
-        printf("MaxCurrent0,1 (Amps): % 7.2lf,% 7.2lf\n",
-         rover_get_max_current0(rover.memmap_main), rover_get_max_current1(rover.memmap_main));
-        printf("CurrentLimit0,1 (Amps): % 7.2lf,% 7.2lf\n",
-         rover_get_current_limit0(rover.memmap_main), rover_get_current_limit1(rover.memmap_main));
-    } else {
-        if (rover.config->motor_count == 4) {
-            printf("Motor status (main/front): %d/%d\n", rover_main_motor_status, rover_front_motor_status);
+    if (rover.config->motor_count == 4) {
+        printf("Motor status (main/front): %d/%d\n", rover_get_motor_status(&rover, rover.memmap_main), rover_get_motor_status(&rover, rover.memmap_second));
+        if (rover.sysname == SYSNAME_MECANUMROVER21) {
             printf("MaxCurrent0,1,2,3 (Amps): % 7.2lf,% 7.2lf,% 7.2lf,% 7.2lf\n",
-             rover_get_max_current0(rover.memmap_main),  rover_get_max_current1(rover.memmap_main),
-             rover_get_max_current0(rover.memmap_front), rover_get_max_current1(rover.memmap_front));
+             rover_get_max_current0(&rover, rover.memmap_main),   rover_get_max_current1(&rover, rover.memmap_main),
+             rover_get_max_current0(&rover, rover.memmap_second), rover_get_max_current1(&rover, rover.memmap_second));
             printf("CurrentLimit0,1,2,3 (Amps): % 7.2lf,% 7.2lf,% 7.2lf,% 7.2lf\n",
-             rover_get_current_limit0(rover.memmap_main),  rover_get_current_limit1(rover.memmap_main),
-             rover_get_current_limit0(rover.memmap_front), rover_get_current_limit1(rover.memmap_front));
+             rover_get_current_limit0(&rover, rover.memmap_main),   rover_get_current_limit1(&rover, rover.memmap_main),
+             rover_get_current_limit0(&rover, rover.memmap_second), rover_get_current_limit1(&rover, rover.memmap_second));
+        }
+    } else {
+        if (rover.config->motor_count == 2) {
+            printf("Motor status: %d\n", rover_get_motor_status(&rover, rover.memmap_main));
         }
     }
 
@@ -78,47 +67,44 @@ int main() {
             }
         }
 
-        ret = rover_read_full_memmap(rover.memmap_main, ROVER_CONTROLLER_ADDR_REAR, &rover);
-
-        rover_uptime_sec = rover_get_uptime(rover.memmap_main);
-        rover_battery_voltage = rover_get_battery_voltage(rover.memmap_main);
-        rover_main_motor_status = rover_get_motor_status(rover.memmap_main);
-
+        ret = rover_read_full_memmap(rover.memmap_main, rover.regs->controller_addr_main, &rover);
         if (rover.config->has_second_controller == 1) {
-            ret = rover_read_full_memmap(rover.memmap_front, ROVER_CONTROLLER_ADDR_FRONT, &rover);
-            rover_front_motor_status = rover_get_motor_status(rover.memmap_front);
+            ret = rover_read_full_memmap(rover.memmap_second, rover.regs->controller_addr_second, &rover);
         }
 
         switch (rover.config->motor_count) {
+
             case 2:
                 printf("% 6.2lf  %2.2lf  %d|% 5d,% 5d|% 5d,% 5d|% 6d,% 6d|% 6d,% 6d|"
                        "% 7.2lf,% 7.2lf|% 4.2lf,% 4.2lf\n",
-                    rover_uptime_sec, rover_battery_voltage, rover_main_motor_status,
-                    rover_get_measured_position0(rover.memmap_main), rover_get_measured_position1(rover.memmap_main),
-                    rover_get_encoder_value0(rover.memmap_main), rover_get_encoder_value1(rover.memmap_main),
-                    rover_get_speed0(rover.memmap_main), rover_get_speed1(rover.memmap_main),
-                    rover_get_outputoffset0(rover.memmap_main), rover_get_outputoffset1(rover.memmap_main),
-                    rover_get_motoroutput_calc0(rover.memmap_main), rover_get_motoroutput_calc1(rover.memmap_main),
-                    rover_get_measured_current_value0(rover.memmap_main), rover_get_measured_current_value1(rover.memmap_main)
+                    rover_get_uptime(&rover), rover_get_battery_voltage(&rover),
+                    rover_get_motor_status(&rover, rover.memmap_main),
+                    rover_get_measured_position0(&rover, rover.memmap_main), rover_get_measured_position1(&rover, rover.memmap_main),
+                    rover_get_encoder_value0(&rover, rover.memmap_main), rover_get_encoder_value1(&rover, rover.memmap_main),
+                    rover_get_speed0(&rover, rover.memmap_main), rover_get_speed1(&rover, rover.memmap_main),
+                    rover_get_outputoffset0(&rover, rover.memmap_main), rover_get_outputoffset1(&rover, rover.memmap_main),
+                    rover_get_motoroutput_calc0(&rover, rover.memmap_main), rover_get_motoroutput_calc1(&rover, rover.memmap_main),
+                    rover_get_measured_current_value0(&rover, rover.memmap_main), rover_get_measured_current_value1(&rover, rover.memmap_main)
                 );
                 break;
 
             case 4:
                 printf("% 6.2lf  %2.2lf  %d/%d|% 5d,% 5d,% 5d,% 5d|% 5d,% 5d,% 5d,% 5d|% 6d,% 6d,% 6d,% 6d|% 6d,% 6d,% 6d,% 6d|"
                        "% 7.2lf,% 7.2lf,% 7.2lf,% 7.2lf|% 4.2lf,% 4.2lf,% 4.2lf,% 4.2lf\n",
-                    rover_uptime_sec, rover_battery_voltage, rover_main_motor_status, rover_front_motor_status,
-                    rover_get_measured_position0(rover.memmap_main),  rover_get_measured_position1(rover.memmap_main),
-                    rover_get_measured_position0(rover.memmap_front), rover_get_measured_position1(rover.memmap_front),
-                    rover_get_encoder_value0(rover.memmap_main),  rover_get_encoder_value1(rover.memmap_main),
-                    rover_get_encoder_value0(rover.memmap_front), rover_get_encoder_value1(rover.memmap_front),
-                    rover_get_speed0(rover.memmap_main),  rover_get_speed1(rover.memmap_main),
-                    rover_get_speed0(rover.memmap_front), rover_get_speed1(rover.memmap_front),
-                    rover_get_outputoffset0(rover.memmap_main),  rover_get_outputoffset1(rover.memmap_main),
-                    rover_get_outputoffset0(rover.memmap_front), rover_get_outputoffset1(rover.memmap_front),
-                    rover_get_motoroutput_calc0(rover.memmap_main),  rover_get_motoroutput_calc1(rover.memmap_main),
-                    rover_get_motoroutput_calc0(rover.memmap_front), rover_get_motoroutput_calc1(rover.memmap_front),
-                    rover_get_measured_current_value0(rover.memmap_main),  rover_get_measured_current_value1(rover.memmap_main),
-                    rover_get_measured_current_value0(rover.memmap_front), rover_get_measured_current_value1(rover.memmap_front)
+                    rover_get_uptime(&rover), rover_get_battery_voltage(&rover),
+                    rover_get_motor_status(&rover, rover.memmap_main), rover_get_motor_status(&rover, rover.memmap_second),
+                    rover_get_measured_position0(&rover, rover.memmap_main),   rover_get_measured_position1(&rover, rover.memmap_main),
+                    rover_get_measured_position0(&rover, rover.memmap_second), rover_get_measured_position1(&rover, rover.memmap_second),
+                    rover_get_encoder_value0(&rover, rover.memmap_main),   rover_get_encoder_value1(&rover, rover.memmap_main),
+                    rover_get_encoder_value0(&rover, rover.memmap_second), rover_get_encoder_value1(&rover, rover.memmap_second),
+                    rover_get_speed0(&rover, rover.memmap_main),   rover_get_speed1(&rover, rover.memmap_main),
+                    rover_get_speed0(&rover, rover.memmap_second), rover_get_speed1(&rover, rover.memmap_second),
+                    rover_get_outputoffset0(&rover, rover.memmap_main),   rover_get_outputoffset1(&rover, rover.memmap_main),
+                    rover_get_outputoffset0(&rover, rover.memmap_second), rover_get_outputoffset1(&rover, rover.memmap_second),
+                    rover_get_motoroutput_calc0(&rover, rover.memmap_main),   rover_get_motoroutput_calc1(&rover, rover.memmap_main),
+                    rover_get_motoroutput_calc0(&rover, rover.memmap_second), rover_get_motoroutput_calc1(&rover, rover.memmap_second),
+                    rover_get_measured_current_value0(&rover, rover.memmap_main),   rover_get_measured_current_value1(&rover, rover.memmap_main),
+                    rover_get_measured_current_value0(&rover, rover.memmap_second), rover_get_measured_current_value1(&rover, rover.memmap_second)
                 );
                 break;
         }
