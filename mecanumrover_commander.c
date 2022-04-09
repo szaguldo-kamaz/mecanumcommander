@@ -51,11 +51,11 @@ void sigpipe_handler(int signum) {
 }
 
 
-void stoprobot(char usekcommands, char *answer) {
+void stoprobot(struct roverstruct *rover, char usekcommands, char *answer) {
     if (usekcommands == 1) {
         rover_kset_STOP(answer);
     } else {
-        rover_set_XYrotation_speed_to_zero(answer);
+        rover_set_XYrotation_speed_to_zero(rover, answer);
     }
 }
 
@@ -391,7 +391,7 @@ int main() {
                     if (ret == -2) {
                         if (dummymode == 0) {
                             commandsend_lamp_on();
-                            stoprobot(usekcommands, answer);
+                            stoprobot(&rover, usekcommands, answer);
                             commandsend_lamp_off();
                         }
                         errormsg("Fatal error, while reading main memmap! Press a key to quit!", 5);
@@ -402,7 +402,7 @@ int main() {
                         unsigned char errmsg[256];
                         if (dummymode == 0) {
                             commandsend_lamp_on();
-                            stoprobot(usekcommands, answer);
+                            stoprobot(&rover, usekcommands, answer);
                             commandsend_lamp_off();
                         }
                         sprintf(errmsg, "Failed to read main memmap correctly (invalid length: %d). Press a key to quit!", ret);
@@ -415,7 +415,7 @@ int main() {
                         if (ret == -2) {
                             if (dummymode == 0) {
                                 commandsend_lamp_on();
-                                stoprobot(usekcommands, answer);
+                                stoprobot(&rover, usekcommands, answer);
                                 commandsend_lamp_off();
                             }
                             errormsg("Fatal error, while reading front memmap! Press a key to quit!", 5);
@@ -426,7 +426,7 @@ int main() {
                             unsigned char errmsg[256];
                             if (dummymode == 0) {
                                 commandsend_lamp_on();
-                                stoprobot(usekcommands, answer);
+                                stoprobot(&rover, usekcommands, answer);
                                 commandsend_lamp_off();
                             }
                             sprintf(errmsg, "Failed to read front memmap correctly (invalid length: %d). Press a key to quit!", ret);
@@ -607,7 +607,7 @@ int main() {
                         if (sockread == -1) {
                             if (dummymode == 0) {
                                 commandsend_lamp_on();
-                                stoprobot(usekcommands, answer);
+                                stoprobot(&rover, usekcommands, answer);
                                 commandsend_lamp_off();
                             }
                             errormsg("Socket read error! Press a key to quit!", 1);
@@ -629,7 +629,7 @@ int main() {
                 if (sockcommi == 1024) {
                     if (dummymode == 0) {
                         commandsend_lamp_on();
-                        stoprobot(usekcommands, answer);
+                        stoprobot(&rover, usekcommands, answer);
                         commandsend_lamp_on();
                     }
                     errormsg("Bad message through socket - Too long (no newline found)! Press a key to quit!", 1);
@@ -669,7 +669,7 @@ int main() {
                     if (wret == -1) {
                         if (dummymode == 0) {
                             commandsend_lamp_on();
-                            stoprobot(usekcommands, answer);
+                            stoprobot(&rover, usekcommands, answer);
                             commandsend_lamp_off();
                         }
                         errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
@@ -682,7 +682,7 @@ int main() {
                     if (strncmp(receivedcommand, "STOPZERO", 8) == 0) {
                         if (dummymode == 0) {
                             commandsend_lamp_on();
-                            stoprobot(usekcommands, answer);
+                            stoprobot(&rover, usekcommands, answer);
                             commandsend_lamp_off();
                         }
                         rotate = 0;
@@ -696,7 +696,7 @@ int main() {
                         if (wret == -1) {
                             if (dummymode == 0) {
                                 commandsend_lamp_on();
-                                stoprobot(usekcommands, answer);
+                                stoprobot(&rover, usekcommands, answer);
                                 commandsend_lamp_off();
                             }
                             errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
@@ -716,7 +716,7 @@ int main() {
                             if (wret == -1) {
                                 if (dummymode == 0) {
                                     commandsend_lamp_on();
-                                    stoprobot(usekcommands, answer);
+                                    stoprobot(&rover, usekcommands, answer);
                                     commandsend_lamp_off();
                                 }
                                 errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
@@ -742,7 +742,7 @@ int main() {
                             if (wret == -1) {
                                 if (dummymode == 0) {
                                     commandsend_lamp_on();
-                                    stoprobot(usekcommands, answer);
+                                    stoprobot(&rover, usekcommands, answer);
                                     commandsend_lamp_off();
                                 }
                                 errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
@@ -769,7 +769,7 @@ int main() {
                             if (wret == -1) {
                                 if (dummymode == 0) {
                                     commandsend_lamp_on();
-                                    stoprobot(usekcommands, answer);
+                                    stoprobot(&rover, usekcommands, answer);
                                     commandsend_lamp_off();
                                 }
                                 errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
@@ -790,7 +790,7 @@ int main() {
                     if (wret == -1) {
                         if (dummymode == 0) {
                             commandsend_lamp_on();
-                            stoprobot(usekcommands, answer);
+                            stoprobot(&rover, usekcommands, answer);
                             commandsend_lamp_off();
                         }
                         errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
@@ -810,7 +810,7 @@ int main() {
                 rotate = 0;
                 if (dummymode == 0) {
                     commandsend_lamp_on();
-                    stoprobot(usekcommands, answer);
+                    stoprobot(&rover, usekcommands, answer);
                     commandsend_lamp_off();
                 }
             }
@@ -978,7 +978,7 @@ int main() {
 
                     if (dummymode == 0) {
                         commandsend_lamp_on();
-                        stoprobot(usekcommands, answer);
+                        stoprobot(&rover, usekcommands, answer);
                         commandsend_lamp_off();
                     }
                     speedX = 0;
@@ -1018,7 +1018,7 @@ int main() {
 // pozitiv elore -- negativ hatra
                 if (dummymode == 0) {
                     commandsend_lamp_on();
-                    setret=rover_set_X_speed(speedX, answer);
+                    setret = rover_set_X_speed(&rover, speedX, answer);
                     commandsend_lamp_off();
                     usleep(100);
                     time_last_cmdsent = time_current;
@@ -1030,7 +1030,7 @@ int main() {
 // pozitiv balra - negativ jobbra
                 if (dummymode == 0) {
                     commandsend_lamp_on();
-                    setret = rover_set_Y_speed(speedY, answer);
+                    setret = rover_set_Y_speed(&rover, speedY, answer);
                     commandsend_lamp_off();
                     usleep(100);
                     time_last_cmdsent = time_current;
@@ -1042,7 +1042,7 @@ int main() {
 // pozitiv balra forgas (100 is meg eleg lassu)
                 if (dummymode == 0) {
                     commandsend_lamp_on();
-                    setret = rover_set_rotation_speed(rotate, answer);
+                    setret = rover_set_rotation_speed(&rover, rotate, answer);
                     commandsend_lamp_off();
                     usleep(100);
                     time_last_cmdsent = time_current;
@@ -1091,7 +1091,7 @@ int main() {
                 if (wret == -1) {
                     if (dummymode == 0) {
                         commandsend_lamp_on();
-                        stoprobot(usekcommands, answer);
+                        stoprobot(&rover, usekcommands, answer);
                         commandsend_lamp_off();
                     }
                     errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
@@ -1116,7 +1116,7 @@ int main() {
         wret = write(clientfd, replymsg, 17);
         if (wret == -1) {
             if (dummymode == 0) {
-                stoprobot(usekcommands, answer);
+                stoprobot(&rover, usekcommands, answer);
             }
             printf("Could not say goodbye to client... Connection lost?");
             perror("write()");
@@ -1139,7 +1139,7 @@ int main() {
 
     if (dummymode == 0) {
         printf("Setting X+Y+Rot speed to zero.\n");
-        stoprobot(usekcommands, answer);
+        stoprobot(&rover, usekcommands, answer);
         printf("Disabling motors on main controller.\n");
         rover_disable_motors(&rover, rover.regs->controller_addr_main, answer);
         if (rover.config->has_second_controller == 1) {

@@ -408,7 +408,7 @@ unsigned int rover_get_controller_addr(struct roverstruct *rover, unsigned int c
             break;
         case 0:
         default:
-            controller_addr = ROVER_CONTROLLER_ADDR_MAIN;
+            controller_addr = DEFAULT_CONTROLLER_ADDR;
     }
 
     return controller_addr;
@@ -446,7 +446,16 @@ unsigned char rover_identify(struct roverstruct *rover) {
 
     int ret;
 
-    ret = rover_read_full_memmap(rover->memmap_main, 0, rover);
+    ret = rover_read_full_memmap(rover->memmap_main, DEFAULT_CONTROLLER_ADDR, rover);
+    if (ret < 0) {
+        return ret;
+    } else {
+        return rover_identify_from_main_memmap(rover);
+    }
+}
+
+
+unsigned char rover_identify_from_main_memmap(struct roverstruct *rover) {
 
     rover->sysname = rover_get_sysname(rover->memmap_main);
     rover->firmrev = rover_get_firmrev(rover->memmap_main);
@@ -509,15 +518,10 @@ int    rover_get_rotation_speed(unsigned char *memmap) { return conv_int16_to_in
 int rover_enable_motors( struct roverstruct *rover, unsigned char controller_addr, unsigned char *reply) { return rover_write_register_uint8(controller_addr, rover->regs->enablemotors, rover->config->enablemotors_on,  reply); }
 int rover_disable_motors(struct roverstruct *rover, unsigned char controller_addr, unsigned char *reply) { return rover_write_register_uint8(controller_addr, rover->regs->enablemotors, rover->config->enablemotors_off, reply); }
 
-int rover_set_X_speed(int speed, unsigned char *reply)        { return rover_write_register_int16(ROVER_CONTROLLER_ADDR_REAR, ROVER_REG_SPEED_X, speed, reply); }
-int rover_set_Y_speed(int speed, unsigned char *reply)        { return rover_write_register_int16(ROVER_CONTROLLER_ADDR_REAR, ROVER_REG_SPEED_Y, speed, reply); }
-int rover_set_rotation_speed(int speed, unsigned char *reply) { return rover_write_register_int16(ROVER_CONTROLLER_ADDR_REAR, ROVER_REG_ROTATION, speed, reply); }
-int rover_set_XYrotation_speed_to_zero(unsigned char *reply)  { return rover_write_register_triple_zero_uint16(ROVER_CONTROLLER_ADDR_REAR, ROVER_REG_SPEED_X, reply); }
-
-int rover_set_encoder_value0(unsigned int value, unsigned char *reply)      { return rover_write_register_uint32(ROVER_CONTROLLER_ADDR_REAR, ROVER_REG_ENCODERVALUE0, value, reply); }
-int rover_set_encoder_value1(unsigned int value, unsigned char *reply)      { return rover_write_register_uint32(ROVER_CONTROLLER_ADDR_REAR, ROVER_REG_ENCODERVALUE1, value, reply); }
-int rover_set_measured_position0(unsigned int value, unsigned char *reply)  { return rover_write_register_uint32(ROVER_CONTROLLER_ADDR_REAR, ROVER_REG_MEASUREDPOS0, value, reply); }
-int rover_set_measured_position1(unsigned int value, unsigned char *reply)  { return rover_write_register_uint32(ROVER_CONTROLLER_ADDR_REAR, ROVER_REG_MEASUREDPOS1, value, reply); }
+int rover_set_X_speed(struct roverstruct *rover, int speed_x, unsigned char *reply)          { return rover_write_register_int16(rover->regs->controller_addr_main, rover->regs->speed_x, speed_x, reply); }
+int rover_set_Y_speed(struct roverstruct *rover, int speed_y, unsigned char *reply)          { return rover_write_register_int16(rover->regs->controller_addr_main, rover->regs->speed_y, speed_y, reply); }
+int rover_set_rotation_speed(struct roverstruct *rover, int speed_rot, unsigned char *reply) { return rover_write_register_int16(rover->regs->controller_addr_main, rover->regs->rotation, speed_rot, reply); }
+int rover_set_XYrotation_speed_to_zero(struct roverstruct *rover, unsigned char *reply)      { return rover_write_register_triple_zero_uint16(rover->regs->controller_addr_main, rover->regs->speed_x, reply); }
 
 /*
  "kkk" commands:

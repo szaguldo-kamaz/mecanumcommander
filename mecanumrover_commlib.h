@@ -26,7 +26,7 @@
 #define LIMIT_SPEED_Y   2100  // mm/sec
 #define LIMIT_SPEED_ROT 8000  // mrad/sec
 
-#define ROVER_CONTROLLER_ADDR_MAIN  0x10
+#define DEFAULT_CONTROLLER_ADDR     0x10
 #define ROVER_CONTROLLER_ADDR_REAR  0x10
 #define ROVER_CONTROLLER_ADDR_FRONT 0x1F
 
@@ -180,6 +180,7 @@ int rover_read_full_memmap(unsigned char *memmap, unsigned int controller_addr, 
 unsigned int rover_get_controller_addr(struct roverstruct *rover, unsigned int controller_id);
 
 unsigned char rover_identify(struct roverstruct *rover);
+unsigned char rover_identify_from_main_memmap(struct roverstruct *rover);
 
 // get values from previously read memmap
 int    rover_get_sysname(unsigned char *memmap);
@@ -211,15 +212,10 @@ int    rover_get_rotation_speed(unsigned char *memmap);
 int rover_enable_motors( struct roverstruct *rover, unsigned char controller_addr, unsigned char *reply);
 int rover_disable_motors(struct roverstruct *rover, unsigned char controller_addr, unsigned char *reply);
 
-int rover_set_X_speed(int speed, unsigned char *reply);
-int rover_set_Y_speed(int speed, unsigned char *reply);
-int rover_set_rotation_speed(int speed, unsigned char *reply);
-int rover_set_XYrotation_speed_to_zero(unsigned char *reply);
-
-int rover_set_encoder_value0(unsigned int value, unsigned char *reply);
-int rover_set_encoder_value1(unsigned int value, unsigned char *reply);
-int rover_set_measured_position0(unsigned int value, unsigned char *reply);
-int rover_set_measured_position1(unsigned int value, unsigned char *reply);
+int rover_set_X_speed(struct roverstruct *rover, int speed_x, unsigned char *reply);
+int rover_set_Y_speed(struct roverstruct *rover, int speed_y, unsigned char *reply);
+int rover_set_rotation_speed(struct roverstruct *rover, int speed_rot, unsigned char *reply);
+int rover_set_XYrotation_speed_to_zero(struct roverstruct *rover, unsigned char *reply);
 
 // kkk commands - more robust comm
 // needs custom firmware!
