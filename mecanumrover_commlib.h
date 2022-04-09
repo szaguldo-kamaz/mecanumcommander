@@ -165,7 +165,7 @@ int rover_write_register_uint8(unsigned char id, unsigned char addr, unsigned ch
 int rover_write_register_uint16(unsigned char id, unsigned char addr, unsigned int data, unsigned char *reply);
 int rover_write_register_int16(unsigned char id, unsigned char addr, int data, unsigned char *reply);
 int rover_write_register_uint32(unsigned char id, unsigned char addr, unsigned int data, unsigned char *reply);
-int rover_read_full_memmap(unsigned char *memmap, unsigned int controller_id, struct roverstruct *rover);
+int rover_read_full_memmap(unsigned char *memmap, unsigned int controller_addr, struct roverstruct *rover);
 
 unsigned int rover_get_controller_addr(struct roverstruct *rover, unsigned int controller_id);
 

@@ -256,18 +256,18 @@ int read_register_from_memmap(unsigned char *memmap, unsigned char addr, unsigne
 
 
 // read just a short part from the rover's memmap, and update it in the local memmap copy
-int rover_read_register(unsigned char id, unsigned char addr, unsigned char length, unsigned char *memmap, struct roverstruct *rover) {
+int rover_read_register(unsigned char controller_addr, unsigned char register_addr, unsigned char length, unsigned char *memmap, struct roverstruct *rover) {
     unsigned char datatosend[64];
     unsigned char reply[256];
     int datalen, recvbytes, rs485err=0xFF, readeyerr=1;
 
     if ( (length != 1) && (length != 2) && (length != 4) && (length != 64) ) {
-        printf("rover_read_register(id:0x%x,addr:0x%x): Invalid length value (%d)! Valid length values are: 1, 2, 4, 64.\n", id, addr, length);
+        printf("rover_read_register(controller_addr:0x%x, register_addr:0x%x): Invalid length value (%d)! Valid length values are: 1, 2, 4, 64.\n", controller_addr, register_addr, length);
         return -1;
     }
 
     bzero(reply, 256);
-    datalen = sprintf(datatosend, "r%02X %02X %02X\n", id, addr, length);
+    datalen = sprintf(datatosend, "r%02X %02X %02X\n", controller_addr, register_addr, length);
     recvbytes = send_command_raw(datatosend, datalen, reply);
     if (recvbytes == 0) {
         return -1;
@@ -308,48 +308,21 @@ int rover_read_register(unsigned char id, unsigned char addr, unsigned char leng
         return -1;
     }
 
-    if (length == 1) {
-        if ( (recvbytes != 3) && (reply[2] != '\r') && (reply[3] != '\n') ) {
-            printf("Invalid response to command(len:%d)/addr 0x%X recvbytes: %d msg: %s\n", length, addr, recvbytes, reply);
-            return -1;
-        }
-        memcpy(&memmap[addr*2], reply, 2);
-    } else {
-        if (length == 2) {
-            if ( (recvbytes != 6) && (reply[4] != '\r') && (reply[5] != '\n') ) {
-                printf("Invalid response to command(len:%d)/addr 0x%X recvbytes: %d msg: %s\n", length, addr, recvbytes, reply);
-                return -1;
-            }
-            memcpy(&memmap[addr*2], reply, 4);
-        } else {
-            if (length == 4) {
-                if ( (recvbytes != 10) && (reply[8] != '\r') && (reply[9] != '\n') ) {
-                    printf("Invalid response to command(len:%d)/addr 0x%X recvbytes: %d msg: %s\n", length, addr, recvbytes, reply);
-                    return -1;
-                }
-                memcpy(&memmap[addr*2], reply, 8);
-            } else {
-                if (length == 64) {
-                    if ( (recvbytes != 130) && (reply[128] != '\r') && (reply[129] != '\n') ) {
-                        printf("Invalid response to command(len:%d)/addr 0x%X recvbytes: %d msg: %s\n", length, addr, recvbytes, reply);
-                        return -1;
-                    }
-                    memcpy(&memmap[addr*2], reply, 128);
-                }
-            }
-        }
+    if ( (recvbytes != (2 * length + 2)) && (reply[2*length] != '\r') && (reply[2*length+1] != '\n') ) {
+        printf("Invalid response to command(len:%d)/register_addr 0x%X recvbytes: %d msg: %s\n", length, register_addr, recvbytes, reply);
+        return -1;
     }
+    memcpy(&memmap[register_addr*2], reply, 2 * length);
 
     return 0;
 
 }
 
-
-int rover_write_register_uint8(unsigned char id, unsigned char addr, unsigned char data, unsigned char *reply) {
+int rover_write_register_uint8(unsigned char controller_addr, unsigned char register_addr, unsigned char data, unsigned char *reply) {
         unsigned char datatosend[32];
         int datalen;
 
-        datalen = sprintf(datatosend, "w%02X %02X %02X\n", id, addr, data);
+        datalen = sprintf(datatosend, "w%02X %02X %02X\n", controller_addr, register_addr, data);
 #ifdef DEBUG
         printf("Write to rover uint8: len:%d data:%s\n", datalen, datatosend);
 #endif
@@ -358,13 +331,13 @@ int rover_write_register_uint8(unsigned char id, unsigned char addr, unsigned ch
 }
 
 
-int rover_write_register_uint16(unsigned char id, unsigned char addr, unsigned int data, unsigned char *reply) {
+int rover_write_register_uint16(unsigned char controller_addr, unsigned char register_addr, unsigned int data, unsigned char *reply) {
         unsigned char datatosend[64];
         int datalen;
 
         if (data < 0) { data = 0; }
         else { if (data > 65535) { data = 65535; } }
-        datalen = sprintf(datatosend, "w%02X %02X %02X%02X\n", id, addr, data & 0xFF, data >> 8);
+        datalen = sprintf(datatosend, "w%02X %02X %02X%02X\n", controller_addr, register_addr, data & 0xFF, data >> 8);
 #ifdef DEBUG
         printf("Write to rover uint16: len:%d data:%s\n", datalen, datatosend);
 #endif
@@ -373,11 +346,11 @@ int rover_write_register_uint16(unsigned char id, unsigned char addr, unsigned i
 }
 
 
-int rover_write_register_uint32(unsigned char id, unsigned char addr, unsigned int data, unsigned char *reply) {
+int rover_write_register_uint32(unsigned char controller_addr, unsigned char register_addr, unsigned int data, unsigned char *reply) {
         unsigned char datatosend[64];
         int datalen;
 
-        datalen = sprintf(datatosend, "w%02X %02X %02X%02X%02X%02X\n", id, addr, data & 0xFF, (data & 0xFF00) >> 8, (data & 0xFF0000) >> 16, (data & 0xFF000000) >> 24);
+        datalen = sprintf(datatosend, "w%02X %02X %02X%02X%02X%02X\n", controller_addr, register_addr, data & 0xFF, (data & 0xFF00) >> 8, (data & 0xFF0000) >> 16, (data & 0xFF000000) >> 24);
 #ifdef DEBUG
         printf("Write to rover uint32: len:%d data:%s\n", datalen, datatosend);
 #endif
@@ -386,11 +359,11 @@ int rover_write_register_uint32(unsigned char id, unsigned char addr, unsigned i
 }
 
 
-int rover_write_register_triple_zero_uint16(unsigned char id, unsigned char addr, unsigned char *reply) {
+int rover_write_register_triple_zero_uint16(unsigned char controller_addr, unsigned char register_addr, unsigned char *reply) {
         unsigned char datatosend[64];
         int datalen;
 
-        datalen = sprintf(datatosend, "w%02X %02X 000000000000\n", id, addr);
+        datalen = sprintf(datatosend, "w%02X %02X 000000000000\n", controller_addr, register_addr);
 #ifdef DEBUG
         printf("Write to rover triple_zero_uint16: len:%d data:%s\n", datalen, datatosend);
 #endif
@@ -399,12 +372,12 @@ int rover_write_register_triple_zero_uint16(unsigned char id, unsigned char addr
 }
 
 
-int rover_write_register_int16(unsigned char id, unsigned char addr, int data, unsigned char *reply) {
+int rover_write_register_int16(unsigned char controller_addr, unsigned char register_addr, int data, unsigned char *reply) {
         unsigned char datatosend[64];
         int datalen;
 
         if (data < 0) { data = 0xFFFF - abs(data); }
-        datalen = sprintf(datatosend, "w%02X %02X %02X%02X\n", id, addr, data & 0xFF, data >> 8);
+        datalen = sprintf(datatosend, "w%02X %02X %02X%02X\n", controller_addr, register_addr, data & 0xFF, data >> 8);
 #ifdef DEBUG
         printf("Write to rover int16: len:%d data:%s\n", datalen, datatosend);
 #endif
@@ -433,31 +406,25 @@ unsigned int rover_get_controller_addr(struct roverstruct *rover, unsigned int c
 }
 
 
-int rover_read_full_memmap(unsigned char *memmap, unsigned int controller_id, struct roverstruct *rover) {
+int rover_read_full_memmap(unsigned char *memmap, unsigned int controller_addr, struct roverstruct *rover) {
     int ret, datalen, i;
     unsigned char replyfull[512];
     unsigned char datatosend[32];
+    unsigned char offset = 0x00;
 
     for (ret = 0; ret < 512; ret++) {
         replyfull[ret] = 'X';
     }
     replyfull[511] = 0;
 
-    // try 3 times
-    for(i = 0; i < 3; i++) {
-        ret = rover_read_register(controller_id, 0x00, 64, replyfull, rover);
-        if (ret ==  0) { break; }
-        if (ret == -2) { return -2; }
-    }
-    for(i = 0; i < 3; i++) {
-        ret = rover_read_register(controller_id, 0x40, 64, replyfull, rover);
-        if (ret ==  0) { break; }
-        if (ret == -2) { return -2; }
-    }
-    for(i = 0; i < 3; i++) {
-        ret = rover_read_register(controller_id, 0x80, 64, replyfull, rover);
-        if (ret ==  0) { break; }
-        if (ret == -2) { return -2; }
+    for (offset = 0x00; offset <= 0x80; offset += 0x40) {
+        // try 3 times
+        for (i = 0; i < 3; i++) {
+            ret = rover_read_register(controller_addr, offset, 64, replyfull, rover);
+            if (ret ==  0) { break; }
+            if (ret == -2) { return -2; }
+        }
+        offset += 0x40;
     }
 
     for (ret = 0; replyfull[ret] != 'X'; ret++) { memmap[ret] = replyfull[ret]; }
