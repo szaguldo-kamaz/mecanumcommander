@@ -469,6 +469,8 @@ unsigned char rover_identify(struct roverstruct *rover) {
 
 unsigned char rover_identify_from_main_memmap(struct roverstruct *rover) {
 
+    rover->config = (struct rover_config *)&rover_config_unknown;
+    rover->regs = (struct rover_regs *)&rover_regs_unknown;
     rover->sysname = rover_get_sysname(rover);
     rover->firmrev = rover_get_firmrev(rover);
     rover->rs485_err_0x10 = 0;
@@ -489,8 +491,6 @@ unsigned char rover_identify_from_main_memmap(struct roverstruct *rover) {
 
         default:
             strcpy(rover->fullname, "UNKNOWN\0");
-            rover->config = (struct rover_config *)&rover_config_unknown;
-            rover->regs = (struct rover_regs *)&rover_regs_unknown;
             return 1;
     }
 }
