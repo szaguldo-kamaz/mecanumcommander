@@ -263,10 +263,10 @@ int main() {
     // it seems like this doesn't really do anything on this robot... but anyway
     if (dummymode == 0) {
         printf("Enabling motors on main controller.\n");
-        rover_enable_motors_main(answer);
+        rover_enable_motors(&rover, rover.regs->controller_addr_main, answer);
         if (rover.config->has_second_controller == 1) {
-            printf("Enabling motors on front controller.\n");
-            rover_enable_motors_front(answer);
+            printf("Enabling motors on second controller.\n");
+            rover_enable_motors(&rover, rover.regs->controller_addr_second, answer);
         }
     }
 
@@ -1141,9 +1141,11 @@ int main() {
         printf("Setting X+Y+Rot speed to zero.\n");
         stoprobot(usekcommands, answer);
         printf("Disabling motors on main controller.\n");
-        rover_disable_motors_main(answer);
-        printf("Disabling motors on front controller.\n");
-        rover_disable_motors_front(answer);
+        rover_disable_motors(&rover, rover.regs->controller_addr_main, answer);
+        if (rover.config->has_second_controller == 1) {
+            printf("Disabling motors on second controller.\n");
+            rover_disable_motors(&rover, rover.regs->controller_addr_second, answer);
+        }
     }
 
     return 0;

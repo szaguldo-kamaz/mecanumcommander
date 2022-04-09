@@ -67,6 +67,8 @@ struct rover_config {
     unsigned char has_second_controller;
     unsigned char has_Y_speed;
     unsigned char motor_count;
+    unsigned char enablemotors_on;
+    unsigned char enablemotors_off;
 };
 
 struct rover_regs {
@@ -206,10 +208,8 @@ int    rover_get_Y_speed(unsigned char *memmap);
 int    rover_get_rotation_speed(unsigned char *memmap);
 
 // write commands
-int rover_enable_motors_main(unsigned char *reply);
-int rover_enable_motors_front(unsigned char *reply);
-int rover_disable_motors_main(unsigned char *reply);
-int rover_disable_motors_front(unsigned char *reply);
+int rover_enable_motors( struct roverstruct *rover, unsigned char controller_addr, unsigned char *reply);
+int rover_disable_motors(struct roverstruct *rover, unsigned char controller_addr, unsigned char *reply);
 
 int rover_set_X_speed(int speed, unsigned char *reply);
 int rover_set_Y_speed(int speed, unsigned char *reply);
