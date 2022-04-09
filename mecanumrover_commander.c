@@ -264,7 +264,7 @@ int main() {
     if (dummymode == 0) {
         printf("Enabling motors on main controller.\n");
         rover_enable_motors_main(answer);
-        if (rover.has_second_controller == 1) {
+        if (rover.config->has_second_controller == 1) {
             printf("Enabling motors on front controller.\n");
             rover_enable_motors_front(answer);
         }
@@ -410,7 +410,7 @@ int main() {
                         quit = 3;
                         break;
                     }
-                    if (rover.has_second_controller == 1) {
+                    if (rover.config->has_second_controller == 1) {
                         ret = rover_read_full_memmap(rover.memmap_front, ROVER_CONTROLLER_ADDR_FRONT, &rover);
                         if (ret == -2) {
                             if (dummymode == 0) {

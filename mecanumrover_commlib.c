@@ -17,6 +17,12 @@
 #include "mecanumrover_commlib.h"
 
 
+// { has_second_controller, has_Y_speed, motor_count }
+const struct rover_config rover_config_unknown        = { 0, 0, 2 };
+const struct rover_config rover_config_mecanumrover21 = { 1, 1, 4 };
+const struct rover_config rover_config_megarover3     = { 0, 0, 2 };
+
+
 const struct rover_regs rover_regs_unknown = {
     0x10, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00,
@@ -448,22 +454,19 @@ unsigned char rover_identify(struct roverstruct *rover) {
     switch (rover->sysname) {
         case 0x21:
             strcpy(rover->fullname, "MecanumRover V2.1\0");
-            rover->has_second_controller = 1;
-            rover->has_Y_speed = 1;
-            rover->motor_count = 4;
+            rover->config = (struct rover_config *)&rover_config_mecanumrover21;
             rover->regs = (struct rover_regs *)&rover_regs_mecanumrover21;
             return 0;
 
         case 0x30:
             strcpy(rover->fullname, "MegaRover V3\0");
-            rover->has_second_controller = 0;
-            rover->has_Y_speed = 0;
-            rover->motor_count = 2;
+            rover->config = (struct rover_config *)&rover_config_megarover3;
             rover->regs = (struct rover_regs *)&rover_regs_megarover3;
             return 0;
 
         default:
             strcpy(rover->fullname, "UNKNOWN\0");
+            rover->config = (struct rover_config *)&rover_config_unknown;
             rover->regs = (struct rover_regs *)&rover_regs_unknown;
             return 1;
     }

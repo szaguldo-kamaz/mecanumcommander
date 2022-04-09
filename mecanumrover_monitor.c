@@ -37,19 +37,19 @@ int main() {
     printf("Rover ID: 0x%x Firmware rev: 0x%x Uptime: %lf sec Battery: %lf V \n",
             rover.sysname, rover.firmrev, rover_uptime_sec, rover_battery_voltage);
 
-    if (rover.has_second_controller == 1) {
+    if (rover.config->has_second_controller == 1) {
         ret = rover_read_full_memmap(rover.memmap_front, ROVER_CONTROLLER_ADDR_FRONT, &rover);
         rover_front_motor_status = rover_get_motor_status(rover.memmap_front);
     }
 
-    if (rover.motor_count == 2) {
+    if (rover.config->motor_count == 2) {
         printf("Motor status: %d\n", rover_main_motor_status);
         printf("MaxCurrent0,1 (Amps): % 7.2lf,% 7.2lf\n",
          rover_get_max_current0(rover.memmap_main), rover_get_max_current1(rover.memmap_main));
         printf("CurrentLimit0,1 (Amps): % 7.2lf,% 7.2lf\n",
          rover_get_current_limit0(rover.memmap_main), rover_get_current_limit1(rover.memmap_main));
     } else {
-        if (rover.motor_count == 4) {
+        if (rover.config->motor_count == 4) {
             printf("Motor status (main/front): %d/%d\n", rover_main_motor_status, rover_front_motor_status);
             printf("MaxCurrent0,1,2,3 (Amps): % 7.2lf,% 7.2lf,% 7.2lf,% 7.2lf\n",
              rover_get_max_current0(rover.memmap_main),  rover_get_max_current1(rover.memmap_main),
@@ -63,7 +63,7 @@ int main() {
     while (1) {
 
         if (i++ % 15 == 0) {
-            switch (rover.motor_count) {
+            switch (rover.config->motor_count) {
                 case 2:
                     printf("-------------------------------------------------------------------------------------------------------------------------------\n");
                     printf(" Uptime  Batt(V) Mot| Pos0, Pos1 | Enc0, Enc1 |  Spd0,  Spd1 |  OutputOffset0,1  |     MotOutCalc0,1     |  MeasuredCurr0,1    \n");
@@ -84,12 +84,12 @@ int main() {
         rover_battery_voltage = rover_get_battery_voltage(rover.memmap_main);
         rover_main_motor_status = rover_get_motor_status(rover.memmap_main);
 
-        if (rover.has_second_controller == 1) {
+        if (rover.config->has_second_controller == 1) {
             ret = rover_read_full_memmap(rover.memmap_front, ROVER_CONTROLLER_ADDR_FRONT, &rover);
             rover_front_motor_status = rover_get_motor_status(rover.memmap_front);
         }
 
-        switch (rover.motor_count) {
+        switch (rover.config->motor_count) {
             case 2:
                 printf("% 6.2lf  %2.2lf  %d|% 5d,% 5d|% 5d,% 5d|% 6d,% 6d|% 6d,% 6d|"
                        "% 7.2lf,% 7.2lf|% 4.2lf,% 4.2lf\n",

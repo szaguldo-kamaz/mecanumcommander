@@ -63,6 +63,12 @@
 #define MEGAROVER3_REG_ROTATION         0x94
 
 
+struct rover_config {
+    unsigned char has_second_controller;
+    unsigned char has_Y_speed;
+    unsigned char motor_count;
+};
+
 struct rover_regs {
     unsigned char controller_addr_main;
     unsigned char controller_addr_second;
@@ -98,12 +104,10 @@ struct rover_regs {
 };
 
 struct roverstruct {
+    struct rover_config *config;
     struct rover_regs *regs;
     unsigned  int sysname;
     unsigned  int firmrev;
-    unsigned char has_second_controller;
-    unsigned char has_Y_speed;
-    unsigned char motor_count;
     unsigned  int rs485_err_0x10;
     unsigned  int rs485_err_0x1F;
     unsigned char memmap_main[512];
