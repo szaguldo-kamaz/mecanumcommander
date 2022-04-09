@@ -8,6 +8,10 @@
 
 //#define DEBUG 1
 
+#ifndef __MECACOMLIB_H__
+
+#define __MECACOMLIB_H__
+
 // to use the FTDI USB-UART on the robot controller
 #define DEVFILE         "/dev/ttyUSB0"
 #define BAUDRATE        B115200
@@ -217,3 +221,5 @@ int rover_set_measured_position1(unsigned int value, unsigned char *reply);
 // needs custom firmware!
 int rover_kset_STOP(unsigned char *reply);
 int rover_kset_XYrotation_speed(int xspeed, int yspeed, int rotspeed, unsigned char *reply);
+
+#endif
