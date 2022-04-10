@@ -16,4 +16,4 @@ mecanumrover_memmap_dump_to_file:
 	$(CC) mecanumrover_memmap_dump_to_file.c -o mecanumrover_memmap_dump_to_file mecanumrover_commlib.o
 
 clean:
-	rm -f *.o mecanumrover_monitor mecanumrover_commander
+	rm -f *.o mecanumrover_monitor mecanumrover_commander mecanumrover_memmap_dump_to_file
