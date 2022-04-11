@@ -61,6 +61,10 @@
 
 #define MEGAROVER3_REG_ENCODERVALUE0         0x50
 #define MEGAROVER3_REG_ENCODERVALUE1         0x54
+#define MEGAROVER3_REG_MOTORSPEED0           0x60
+#define MEGAROVER3_REG_MOTORSPEED1           0x64
+#define MEGAROVER3_REG_MEASUREDCURRENT0      0x70
+#define MEGAROVER3_REG_MEASUREDCURRENT1      0x72
 #define MEGAROVER3_REG_BATTERYVOLTAGE        0x82
 #define MEGAROVER3_REG_SPEED_X               0x90
 #define MEGAROVER3_REG_SPEED_Y               0x92 // unused
@@ -107,6 +111,9 @@ struct rover_regs {
     unsigned char speed1;
     unsigned char encodervalue0;
     unsigned char encodervalue1;
+
+    unsigned char motorspeed0;
+    unsigned char motorspeed1;
 };
 
 struct roverstruct {
@@ -165,6 +172,8 @@ int    rover_get_measured_position0(struct roverstruct *rover, unsigned char *me
 int    rover_get_measured_position1(struct roverstruct *rover, unsigned char *memmap);
 int    rover_get_speed0(struct roverstruct *rover, unsigned char *memmap);
 int    rover_get_speed1(struct roverstruct *rover, unsigned char *memmap);
+int    rover_get_motorspeed0(struct roverstruct *rover, unsigned char *memmap);
+int    rover_get_motorspeed1(struct roverstruct *rover, unsigned char *memmap);
 double rover_get_motoroutput_calc0(struct roverstruct *rover, unsigned char *memmap);
 double rover_get_motoroutput_calc1(struct roverstruct *rover, unsigned char *memmap);
 int    rover_get_encoder_value0(struct roverstruct *rover, unsigned char *memmap);

@@ -356,23 +356,33 @@ int main() {
     mvprintw(statusdrawy + 1,  statusdrawx, "Uptime              :");
     mvprintw(statusdrawy + 2,  statusdrawx, "Battery             :");
     mvprintw(statusdrawy + 3,  statusdrawx, "Motors          🏍️   :");
-    if (rover.sysname == SYSNAME_MECANUMROVER21) {
-        mvprintw(statusdrawy + 4,  statusdrawx + 1, "Speed        M3,M4 : ");
-        mvprintw(statusdrawy + 5,  statusdrawx + 1, "Speed        M1,M2 : ");
-        mvprintw(statusdrawy + 6,  statusdrawx + 1, "Position     M3,M4 : ");
-        mvprintw(statusdrawy + 7,  statusdrawx + 1, "Position     M1,M2 : ");
-        mvprintw(statusdrawy + 8,  statusdrawx + 1, "Encoder      M3,M4 : ");
-        mvprintw(statusdrawy + 9,  statusdrawx + 1, "Encoder      M1,M2 : ");
-        mvprintw(statusdrawy + 10, statusdrawx + 1, "OutputOffset M3,M4 : ");
-        mvprintw(statusdrawy + 11, statusdrawx + 1, "OutputOffset M1,M2 : ");
-        mvprintw(statusdrawy + 12, statusdrawx + 1, "MotOutCalc   M3,M4 :               %%");
-        mvprintw(statusdrawy + 13, statusdrawx + 1, "MotOutCalc   M1,M2 :               %%");
-        mvprintw(statusdrawy + 14, statusdrawx + 1, "MeasuredCurr M3,M4 :               A");
-        mvprintw(statusdrawy + 15, statusdrawx + 1, "MeasuredCurr M1,M2 :               A");
-        mvprintw(statusdrawy + 16, statusdrawx + 1, "MaxCurrent   M3,M4 :               A");
-        mvprintw(statusdrawy + 17, statusdrawx + 1, "MaxCurrent   M1,M2 :               A");
-        mvprintw(statusdrawy + 18, statusdrawx + 1, "CurrentLimit M3,M4 :               A");
-        mvprintw(statusdrawy + 19, statusdrawx + 1, "CurrentLimit M1,M2 :               A");
+
+    switch (rover.sysname) {
+
+        case SYSNAME_MECANUMROVER21:
+            mvprintw(statusdrawy +  4, statusdrawx + 1, "Speed        M3,M4 : ");
+            mvprintw(statusdrawy +  5, statusdrawx + 1, "Speed        M1,M2 : ");
+            mvprintw(statusdrawy +  6, statusdrawx + 1, "Position     M3,M4 : ");
+            mvprintw(statusdrawy +  7, statusdrawx + 1, "Position     M1,M2 : ");
+            mvprintw(statusdrawy +  8, statusdrawx + 1, "Encoder      M3,M4 : ");
+            mvprintw(statusdrawy +  9, statusdrawx + 1, "Encoder      M1,M2 : ");
+            mvprintw(statusdrawy + 10, statusdrawx + 1, "OutputOffset M3,M4 : ");
+            mvprintw(statusdrawy + 11, statusdrawx + 1, "OutputOffset M1,M2 : ");
+            mvprintw(statusdrawy + 12, statusdrawx + 1, "MotOutCalc   M3,M4 :               %%");
+            mvprintw(statusdrawy + 13, statusdrawx + 1, "MotOutCalc   M1,M2 :               %%");
+            mvprintw(statusdrawy + 14, statusdrawx + 1, "MeasuredCurr M3,M4 :               A");
+            mvprintw(statusdrawy + 15, statusdrawx + 1, "MeasuredCurr M1,M2 :               A");
+            mvprintw(statusdrawy + 16, statusdrawx + 1, "MaxCurrent   M3,M4 :               A");
+            mvprintw(statusdrawy + 17, statusdrawx + 1, "MaxCurrent   M1,M2 :               A");
+            mvprintw(statusdrawy + 18, statusdrawx + 1, "CurrentLimit M3,M4 :               A");
+            mvprintw(statusdrawy + 19, statusdrawx + 1, "CurrentLimit M1,M2 :               A");
+            break;
+
+        case SYSNAME_MEGAROVER3:
+            mvprintw(statusdrawy +  5, statusdrawx + 1, "MotorSpeed M1,M2 : ");
+            mvprintw(statusdrawy +  9, statusdrawx + 1, "Encoder    M1,M2 : ");
+//            mvprintw(statusdrawy + 15, statusdrawx + 1, "MeasuredCurr M1,M2 :               A");
+            break;
     }
     attroff(COLOR_PAIR(1));
 
@@ -557,26 +567,35 @@ int main() {
             }
         }
 
-        if (rover.sysname == SYSNAME_MECANUMROVER21) {
-            attron(COLOR_PAIR(1));
-            mvprintw(statusdrawy + 4,  statusdrawx + 22, "% 6d,% 6d", rover_get_speed0(&rover, rover.memmap_second), rover_get_speed1(&rover, rover.memmap_second));
-            mvprintw(statusdrawy + 5,  statusdrawx + 22, "% 6d,% 6d", rover_get_speed0(&rover, rover.memmap_main),   rover_get_speed1(&rover, rover.memmap_main));
-            mvprintw(statusdrawy + 6,  statusdrawx + 22, "% 6d,% 6d", rover_get_measured_position0(&rover, rover.memmap_second), rover_get_measured_position1(&rover, rover.memmap_second));
-            mvprintw(statusdrawy + 7,  statusdrawx + 22, "% 6d,% 6d", rover_get_measured_position0(&rover, rover.memmap_main),   rover_get_measured_position1(&rover, rover.memmap_main));
-            mvprintw(statusdrawy + 8,  statusdrawx + 22, "% 6d,% 6d", rover_get_encoder_value0(&rover, rover.memmap_second), rover_get_encoder_value1(&rover, rover.memmap_second));
-            mvprintw(statusdrawy + 9,  statusdrawx + 22, "% 6d,% 6d", rover_get_encoder_value0(&rover, rover.memmap_main),   rover_get_encoder_value1(&rover, rover.memmap_main));
-            mvprintw(statusdrawy + 10, statusdrawx + 22, "% 6d,% 6d", rover_get_outputoffset0(&rover, rover.memmap_second), rover_get_outputoffset1(&rover, rover.memmap_second));
-            mvprintw(statusdrawy + 11, statusdrawx + 22, "% 6d,% 6d", rover_get_outputoffset0(&rover, rover.memmap_main),   rover_get_outputoffset1(&rover, rover.memmap_main));
-            mvprintw(statusdrawy + 12, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_motoroutput_calc0(&rover, rover.memmap_second), rover_get_motoroutput_calc1(&rover, rover.memmap_second));
-            mvprintw(statusdrawy + 13, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_motoroutput_calc0(&rover, rover.memmap_main),   rover_get_motoroutput_calc1(&rover, rover.memmap_main));
-            mvprintw(statusdrawy + 14, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_measured_current_value0(&rover, rover.memmap_second), rover_get_measured_current_value1(&rover, rover.memmap_second));
-            mvprintw(statusdrawy + 15, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_measured_current_value0(&rover, rover.memmap_main),   rover_get_measured_current_value1(&rover, rover.memmap_main));
-            mvprintw(statusdrawy + 16, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_max_current0(&rover, rover.memmap_second), rover_get_max_current1(&rover, rover.memmap_second));
-            mvprintw(statusdrawy + 17, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_max_current0(&rover, rover.memmap_main),   rover_get_max_current1(&rover, rover.memmap_main));
-            mvprintw(statusdrawy + 18, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_current_limit0(&rover, rover.memmap_second), rover_get_current_limit1(&rover, rover.memmap_second));
-            mvprintw(statusdrawy + 19, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_current_limit0(&rover, rover.memmap_main),   rover_get_current_limit1(&rover, rover.memmap_main));
-            attroff(COLOR_PAIR(1));
+        attron(COLOR_PAIR(1));
+        switch (rover.sysname) {
+
+            case SYSNAME_MECANUMROVER21:
+                mvprintw(statusdrawy +  4, statusdrawx + 22, "% 6d,% 6d", rover_get_speed0(&rover, rover.memmap_second), rover_get_speed1(&rover, rover.memmap_second));
+                mvprintw(statusdrawy +  5, statusdrawx + 22, "% 6d,% 6d", rover_get_speed0(&rover, rover.memmap_main),   rover_get_speed1(&rover, rover.memmap_main));
+                mvprintw(statusdrawy +  6, statusdrawx + 22, "% 6d,% 6d", rover_get_measured_position0(&rover, rover.memmap_second), rover_get_measured_position1(&rover, rover.memmap_second));
+                mvprintw(statusdrawy +  7, statusdrawx + 22, "% 6d,% 6d", rover_get_measured_position0(&rover, rover.memmap_main),   rover_get_measured_position1(&rover, rover.memmap_main));
+                mvprintw(statusdrawy +  8, statusdrawx + 22, "% 6d,% 6d", rover_get_encoder_value0(&rover, rover.memmap_second), rover_get_encoder_value1(&rover, rover.memmap_second));
+                mvprintw(statusdrawy +  9, statusdrawx + 22, "% 6d,% 6d", rover_get_encoder_value0(&rover, rover.memmap_main),   rover_get_encoder_value1(&rover, rover.memmap_main));
+                mvprintw(statusdrawy + 10, statusdrawx + 22, "% 6d,% 6d", rover_get_outputoffset0(&rover, rover.memmap_second), rover_get_outputoffset1(&rover, rover.memmap_second));
+                mvprintw(statusdrawy + 11, statusdrawx + 22, "% 6d,% 6d", rover_get_outputoffset0(&rover, rover.memmap_main),   rover_get_outputoffset1(&rover, rover.memmap_main));
+                mvprintw(statusdrawy + 12, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_motoroutput_calc0(&rover, rover.memmap_second), rover_get_motoroutput_calc1(&rover, rover.memmap_second));
+                mvprintw(statusdrawy + 13, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_motoroutput_calc0(&rover, rover.memmap_main),   rover_get_motoroutput_calc1(&rover, rover.memmap_main));
+                mvprintw(statusdrawy + 14, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_measured_current_value0(&rover, rover.memmap_second), rover_get_measured_current_value1(&rover, rover.memmap_second));
+                mvprintw(statusdrawy + 15, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_measured_current_value0(&rover, rover.memmap_main),   rover_get_measured_current_value1(&rover, rover.memmap_main));
+                mvprintw(statusdrawy + 16, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_max_current0(&rover, rover.memmap_second), rover_get_max_current1(&rover, rover.memmap_second));
+                mvprintw(statusdrawy + 17, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_max_current0(&rover, rover.memmap_main),   rover_get_max_current1(&rover, rover.memmap_main));
+                mvprintw(statusdrawy + 18, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_current_limit0(&rover, rover.memmap_second), rover_get_current_limit1(&rover, rover.memmap_second));
+                mvprintw(statusdrawy + 19, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_current_limit0(&rover, rover.memmap_main),   rover_get_current_limit1(&rover, rover.memmap_main));
+                break;
+
+            case SYSNAME_MEGAROVER3:
+                mvprintw(statusdrawy +  5, statusdrawx + 22, "% 8d,% 8d", rover_get_motorspeed0(&rover, rover.memmap_main), rover_get_motorspeed1(&rover, rover.memmap_main));
+                mvprintw(statusdrawy +  9, statusdrawx + 22, "% 8d,% 8d", rover_get_encoder_value0(&rover, rover.memmap_main), rover_get_encoder_value1(&rover, rover.memmap_main));
+//                mvprintw(statusdrawy + 15, statusdrawx + 22, "% 6.2lf,% 6.2lf", rover_get_measured_current_value0(&rover, rover.memmap_main), rover_get_measured_current_value1(&rover, rover.memmap_main));
+                break;
         }
+        attroff(COLOR_PAIR(1));
 
         // heart off
         if (dummymode == 0) {

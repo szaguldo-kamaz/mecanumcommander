@@ -29,7 +29,8 @@ const struct rover_regs rover_regs_unknown = {
     ROVER_REG_SYSTEMNAME, ROVER_REG_FIRMWAREREVISION, ROVER_REG_UPTIME,
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00
 };
 
 const struct rover_regs rover_regs_mecanumrover21 = {
@@ -44,7 +45,8 @@ const struct rover_regs rover_regs_mecanumrover21 = {
     MECANUMROVER21_REG_MEASUREDCURRENT0, MECANUMROVER21_REG_MEASUREDCURRENT1,
     MECANUMROVER21_REG_MEASUREDPOS0, MECANUMROVER21_REG_MEASUREDPOS1,
     MECANUMROVER21_REG_SPEED0, MECANUMROVER21_REG_SPEED1,
-    MECANUMROVER21_REG_ENCODERVALUE0, MECANUMROVER21_REG_ENCODERVALUE1
+    MECANUMROVER21_REG_ENCODERVALUE0, MECANUMROVER21_REG_ENCODERVALUE1,
+    0x00, 0x00
 };
 
 const struct rover_regs rover_regs_megarover3 = {
@@ -56,10 +58,11 @@ const struct rover_regs rover_regs_megarover3 = {
     0x00, 0x00,
     0x00, 0x00,
     0x00, 0x00,
+    MEGAROVER3_REG_MEASUREDCURRENT0, MEGAROVER3_REG_MEASUREDCURRENT1,
     0x00, 0x00,
     0x00, 0x00,
-    0x00, 0x00,
-    MEGAROVER3_REG_ENCODERVALUE0, MEGAROVER3_REG_ENCODERVALUE1
+    MEGAROVER3_REG_ENCODERVALUE0, MEGAROVER3_REG_ENCODERVALUE1,
+    MEGAROVER3_REG_MOTORSPEED0, MEGAROVER3_REG_MOTORSPEED1,
 };
 
 int conv_int16_to_int32(int int16) {
@@ -516,6 +519,8 @@ int    rover_get_measured_position0(struct roverstruct *rover, unsigned char *me
 int    rover_get_measured_position1(struct roverstruct *rover, unsigned char *memmap)      { return read_register_from_memmap(memmap, rover->regs->measuredpos1, 4); }
 int    rover_get_speed0(struct roverstruct *rover, unsigned char *memmap)                  { return conv_int16_to_int32(read_register_from_memmap(memmap, rover->regs->speed0, 2)); }
 int    rover_get_speed1(struct roverstruct *rover, unsigned char *memmap)                  { return conv_int16_to_int32(read_register_from_memmap(memmap, rover->regs->speed1, 2)); }
+int    rover_get_motorspeed0(struct roverstruct *rover, unsigned char *memmap)             { return read_register_from_memmap(memmap, rover->regs->motorspeed0, 4); }
+int    rover_get_motorspeed1(struct roverstruct *rover, unsigned char *memmap)             { return read_register_from_memmap(memmap, rover->regs->motorspeed1, 4); }
 double rover_get_motoroutput_calc0(struct roverstruct *rover, unsigned char *memmap)       { return (conv_int16_to_int32(read_register_from_memmap(memmap, rover->regs->motoroutputcalc0, 2)) / 4096.0) * 100; } // 100% = 0x1000
 double rover_get_motoroutput_calc1(struct roverstruct *rover, unsigned char *memmap)       { return (conv_int16_to_int32(read_register_from_memmap(memmap, rover->regs->motoroutputcalc1, 2)) / 4096.0) * 100; } // 100% = 0x1000
 int    rover_get_encoder_value0(struct roverstruct *rover, unsigned char *memmap)          { return read_register_from_memmap(memmap, rover->regs->encodervalue0, 4); }
