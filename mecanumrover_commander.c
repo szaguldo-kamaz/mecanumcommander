@@ -15,7 +15,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <sys/timeb.h>
 #include <sys/select.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -85,7 +84,7 @@ int main() {
 
     struct roverstruct rover;
 
-    struct timeb timestruct;
+    struct timeval timestruct;
     double time_current, time_last_memmapread, time_last_cmdsent, time_last_kcmdsent, time_last_remotecmd_recv;
     unsigned char remotecmd_timed_out=1;
 
@@ -402,8 +401,8 @@ int main() {
 
         int setret = 0;
 
-        ftime(&timestruct);
-        time_current = timestruct.time + (timestruct.millitm / 1000.0);
+        gettimeofday(&timestruct, NULL);
+        time_current = timestruct.tv_sec + timestruct.tv_usec / 1000000.0;
 
         if (dummymode == 0) {
 
@@ -480,7 +479,8 @@ int main() {
                     }
                 }
 
-                time_last_memmapread = timestruct.time + (timestruct.millitm / 1000.0);
+                gettimeofday(&timestruct, NULL);
+                time_last_memmapread = timestruct.tv_sec + timestruct.tv_usec / 1000000.0;
 
             }
 
@@ -723,8 +723,8 @@ int main() {
                         speedX = 0;
                         speedY = 0;
                         badcommand = 0;
-                        ftime(&timestruct);
-                        time_last_remotecmd_recv = timestruct.time + (timestruct.millitm / 1000.0);
+                        gettimeofday(&timestruct, NULL);
+                        time_last_remotecmd_recv = timestruct.tv_sec + timestruct.tv_usec / 1000000.0;
                         strncpy(replymsg, "OKZERO\r\n", 8);
                         wret = write(clientfd, replymsg, 8);
                         if (wret == -1) {
@@ -760,8 +760,8 @@ int main() {
                         } else {
                             rotate = newrot;
                             set_new_rot_value_from_remote = 1;
-                            ftime(&timestruct);
-                            time_last_remotecmd_recv = timestruct.time + (timestruct.millitm / 1000.0);
+                            gettimeofday(&timestruct, NULL);
+                            time_last_remotecmd_recv = timestruct.tv_sec + timestruct.tv_usec / 1000000.0;
                         }
                     }
 
@@ -786,8 +786,8 @@ int main() {
                         } else {
                             speedX = newspx;
                             set_new_spx_value_from_remote = 1;
-                            ftime(&timestruct);
-                            time_last_remotecmd_recv = timestruct.time + (timestruct.millitm / 1000.0);
+                            gettimeofday(&timestruct, NULL);
+                            time_last_remotecmd_recv = timestruct.tv_sec + timestruct.tv_usec / 1000000.0;
                         }
                     }
 
@@ -813,8 +813,8 @@ int main() {
                         } else {
                             speedY = newspy;
                             set_new_spy_value_from_remote = 1;
-                            ftime(&timestruct);
-                            time_last_remotecmd_recv = timestruct.time + (timestruct.millitm / 1000.0);
+                            gettimeofday(&timestruct, NULL);
+                            time_last_remotecmd_recv = timestruct.tv_sec + timestruct.tv_usec / 1000000.0;
                         }
                     }
 
@@ -1005,8 +1005,8 @@ int main() {
             }
         }
 
-        ftime(&timestruct);
-        time_current = timestruct.time + (timestruct.millitm / 1000.0);
+        gettimeofday(&timestruct, NULL);
+        time_current = timestruct.tv_sec + timestruct.tv_usec / 1000000.0;
 
         if (remotecontrol == 1) {
             if ((time_current - time_last_remotecmd_recv) > REPEAT_TIME_SEC_REMOTECMDRECV) {
