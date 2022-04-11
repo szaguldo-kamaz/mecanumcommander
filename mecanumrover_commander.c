@@ -77,6 +77,24 @@ void commandsend_lamp_off() {
 }
 
 
+void read_memmap_files(struct roverstruct *rover) {
+
+    int fd;
+
+    fd = open("memmap_0x10.dat", O_RDONLY);
+    if (fd != -1) {
+        read(fd, rover->memmap_main, 512);
+    }
+    close(fd);
+    fd = open("memmap_0x1F.dat", O_RDONLY);
+    if (fd != -1) {
+        read(fd, rover->memmap_second, 512);
+    }
+    close(fd);
+
+}
+
+
 int main() {
 
     int ret;
@@ -115,7 +133,7 @@ int main() {
     unsigned char keyboardmode=1;       // for future use...
     unsigned char repeatcommands=1;     // repeat commands every REPEAT_TIME_SEC_CMDSENT, so "commandtimeout" on the robot's controller won't trigger
     unsigned char usekcommands=0;       // use the "triple command set"
-    unsigned char readmemmapfromfile=1; // do not get the memmap from the robot, instead read it from a file
+    unsigned char readmemmapfromfile=0; // do not get the memmap from the robot, instead read it from a file
 
 
     if (dummymode == 1) {
@@ -135,17 +153,38 @@ int main() {
             exit(1);
         }
         close(fd);
+
         if (rover_identify_from_main_memmap(&rover) == 1 ) {
             printf("Unknown rover type: 0x%X!\n", rover.sysname);
             exit(1);
         }
+
     } else {
-        if (rover_identify(&rover) == 0) {
-            printf("Rover found: 0x%x:%s FWRev: 0x%x\n", rover.sysname, rover.fullname, rover.firmrev);
+
+        if (readmemmapfromfile == 1) {
+
+            if (access("memmap_0x10.dat", R_OK) != 0) {
+                printf("Cannot access memmap_0x10.dat!\n");
+                exit(1);
+            }
+            read_memmap_files(&rover);  // when using memmapupdate_via_wifi.sh
+
+            if (rover_identify_from_main_memmap(&rover) == 1 ) {
+                printf("Unknown rover type: 0x%X!\n", rover.sysname);
+                exit(1);
+            }
+
         } else {
-            printf("Unknown rover type: 0x%X!\n", rover.sysname);
-            exit(1);
+
+            if (rover_identify(&rover) == 0) {
+                printf("Rover found: 0x%x:%s FWRev: 0x%x\n", rover.sysname, rover.fullname, rover.firmrev);
+            } else {
+                printf("Unknown rover type: 0x%X!\n", rover.sysname);
+                exit(1);
+            }
+
         }
+
     }
 
     // bind to tcp/3475
@@ -416,18 +455,8 @@ int main() {
                 attroff(COLOR_PAIR(5) | A_BOLD);
                 refresh();
 
-                // when using memmapupdate_via_wifi.sh
                 if (readmemmapfromfile == 1) {
-                    fd = open("memmap_0x10.dat", O_RDONLY);
-                    if (fd != -1) {
-                        ret = read(fd, rover.memmap_main, 512);
-                    }
-                    close(fd);
-                    fd = open("memmap_0x1F.dat", O_RDONLY);
-                    if (fd != -1) {
-                        ret = read(fd, rover.memmap_second, 512);
-                    }
-                    close(fd);
+                    read_memmap_files(&rover);  // when using memmapupdate_via_wifi.sh
                 } else { // read memmap from rover
                     ret = rover_read_full_memmap(rover.memmap_main, rover.regs->controller_addr_main, &rover);
                     if (ret == -2) {
