@@ -2,7 +2,7 @@
     NLAB-MecanumCommlib for Linux, a simple library to control VStone MecanumRover 2.1 / VStone MegaRover 3
     by David Vincze, vincze.david@webcode.hu
     at Human-System Laboratory, Chuo University, Tokyo, Japan, 2021-2022
-    version 0.40
+    version 0.50
     https://github.com/szaguldo-kamaz/
 */
 
