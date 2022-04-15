@@ -744,8 +744,8 @@ int main() {
             if (ret) {
                 if (FD_ISSET(0, &commfdset)) {
                     c = getch();
-                    logmsg(logfd, time_start, "Keypress:");
-                    logmsg(logfd, time_start, &c);
+                    sprintf(logstring, "Keypress: %c", c);
+                    logmsg(logfd, time_start, logstring);
                 }
                 // don't read any new data, while the previous buffer has not been emptied yet
                 if ( (remotecontrol == 1) && (sockread == 0) ) {
