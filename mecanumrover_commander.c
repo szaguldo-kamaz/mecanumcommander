@@ -672,6 +672,11 @@ int main() {
                     if (FD_ISSET(clientfd, &commfdset)) {
                         sockread = read(clientfd, &socketcommbuff[socketcommbuff_offset], BUFFER_SIZE);
                         socketcommbuff[sockread] = 0;
+                        if (sockread == 0) {
+                            errormsg("Client disconnected! Press a key to quit!", 1);
+                            quit = 7;
+                            break;
+                        }
                         if (sockread == -1) {
                             if (dummymode == 0) {
                                 commandsend_lamp_on();
@@ -1207,6 +1212,7 @@ int main() {
         case 4: printf("Error while reading from socket()!\n"); break;
         case 5: printf("Bad message received through socket - Too long (no newline found)!\n"); break;
         case 6: printf("Could not reply to client! Connection was lost maybe?\n"); break;
+        case 7: printf("Client disconnected!\n"); break;
     }
 
     if (got_sigpipe == 1) { printf("Got SIGPIPE! Connection to client was lost maybe?\n"); }
