@@ -95,6 +95,18 @@ void read_memmap_files(struct roverstruct *rover) {
 }
 
 
+void logmsg(int logfd, double time_start, const char *msg) {
+    double time_curr;
+    char logmsg[1024];
+    struct timeval timestruct;
+
+    gettimeofday(&timestruct, NULL);
+    time_curr = timestruct.tv_sec + timestruct.tv_usec / 1000000.0;
+    sprintf(logmsg, "%9.3f %s\n", time_curr - time_start, msg);
+    write(logfd, logmsg, strlen(logmsg));
+}
+
+
 int main() {
 
     int ret;
@@ -103,8 +115,11 @@ int main() {
     struct roverstruct rover;
 
     struct timeval timestruct;
-    double time_current, time_last_memmapread, time_last_cmdsent, time_last_kcmdsent, time_last_remotecmd_recv;
+    double time_start, time_current, time_last_memmapread, time_last_cmdsent, time_last_kcmdsent, time_last_remotecmd_recv;
     unsigned char remotecmd_timed_out=1;
+
+    int logfd;
+    char logstring[512];
 
     int speedX=0, speedY=0, rotate=0;
     int prevspeedX=0, prevspeedY=0, prevrotate=0;
@@ -135,6 +150,18 @@ int main() {
     unsigned char usekcommands=0;       // use the "triple command set"
     unsigned char readmemmapfromfile=0; // do not get the memmap from the robot, instead read it from a file
 
+
+// create logfile
+    logfd = open("mecanumcommander.log", O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
+    if (logfd == -1) {
+        printf("Cannot create logfile: mecanumcommander.log\n");
+        exit(1);
+    }
+
+    gettimeofday(&timestruct, NULL);
+    time_start = timestruct.tv_sec + timestruct.tv_usec / 1000000.0;
+
+    logmsg(logfd, time_start, "Initializing");
 
     if (dummymode == 1) {
         int fd;
@@ -192,6 +219,9 @@ int main() {
 
     }
 
+    sprintf(logstring, "Rover type: 0x%x:%s FWRev: 0x%x", rover.sysname, rover.fullname, rover.firmrev);
+    logmsg(logfd, time_start, logstring);
+
     // bind to tcp/3475
     if (remotecontrol == 1) {
         typedef void (*sighandler_t)(int);
@@ -231,6 +261,7 @@ int main() {
             exit(3);
         }
         printf("Waiting for connection on tcp/3475...\n");
+        logmsg(logfd, time_start, "Waiting for connection on tcp/3475");
         clientfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
         if (clientfd == -1) {
             perror("accept()");
@@ -238,6 +269,7 @@ int main() {
         }
         replylen = sprintf(replymsg, "I'm NLAB-MecanumCommander. Please authenticate yourself.\r\n");
         wret = write(clientfd, replymsg, replylen);
+        logmsg(logfd, time_start, "Welcome string sent to client");
         if (wret == -1) {
             printf("Cannot send reply to client! Connection lost?\n");
             perror("write()");
@@ -265,6 +297,7 @@ int main() {
                  (strncmp(socketcommbuff, COMMANDER_PASSWORD"\r\n", 10) != 0) ) ) {
                     replylen = sprintf(replymsg, "!BADPWD!\r\n");
                     wret = write(clientfd, replymsg, replylen);
+                    logmsg(logfd, time_start, "Bad password!");
                     if (wret == -1) {
                         printf("Cannot send reply to client! Connection lost?\n");
                         perror("write()");
@@ -280,6 +313,7 @@ int main() {
             }
         } else { // timeout
             replylen = sprintf(replymsg, "Timeout. Goodbye!\r\n");
+            logmsg(logfd, time_start, "Authentication timed out");
             wret = write(clientfd, replymsg, replylen);
             if (wret == -1) {
                 printf("Cannot send reply to client! Connection lost?\n");
@@ -295,6 +329,7 @@ int main() {
 
         replylen = sprintf(replymsg, "NLAB-MecanumCommander v" COMMANDER_VERSION " - Rover type: 0x%02x firmware: 0x%02x. Ready.\r\n", rover.sysname, rover.firmrev);
         wret = write(clientfd, replymsg, replylen);
+        logmsg(logfd, time_start, "Welcome message sent to client");
         if (wret == -1) {
             printf("Cannot send reply to client! Connection lost?\n");
             perror("write()");
@@ -307,9 +342,11 @@ int main() {
     if (dummymode == 0) {
         printf("Enabling motors on main controller.\n");
         rover_enable_motors(&rover, rover.regs->controller_addr_main, answer);
+        logmsg(logfd, time_start, "Enabled motors on main controller");
         if (rover.config->has_second_controller == 1) {
             printf("Enabling motors on second controller.\n");
             rover_enable_motors(&rover, rover.regs->controller_addr_second, answer);
+            logmsg(logfd, time_start, "Enabled motors on second controller");
         }
     }
 
@@ -441,6 +478,8 @@ int main() {
     time_last_kcmdsent = 0;
     time_last_remotecmd_recv = 0;
 
+    logmsg(logfd, time_start, "Start");
+
     while ((quit == 0) && (got_sigpipe == 0)) {
 
         int setret = 0;
@@ -461,15 +500,19 @@ int main() {
                 refresh();
 
                 if (readmemmapfromfile == 1) {
+                    logmsg(logfd, time_start, "Reading memmap from files");
                     read_memmap_files(&rover);  // when using memmapupdate_via_wifi.sh
                 } else { // read memmap from rover
+                    logmsg(logfd, time_start, "Reading main memmap from robot");
                     ret = rover_read_full_memmap(rover.memmap_main, rover.regs->controller_addr_main, &rover);
                     if (ret == -2) {
                         if (dummymode == 0) {
                             commandsend_lamp_on();
+                            logmsg(logfd, time_start, "Stoprobot");
                             stoprobot(&rover, usekcommands, answer);
                             commandsend_lamp_off();
                         }
+                        logmsg(logfd, time_start, "Err: Fatal error, while reading main memmap! (2)");
                         errormsg("Fatal error, while reading main memmap! Press a key to quit!", 5);
                         quit = 2;
                         break;
@@ -478,22 +521,27 @@ int main() {
                         unsigned char errmsg[256];
                         if (dummymode == 0) {
                             commandsend_lamp_on();
+                            logmsg(logfd, time_start, "Stoprobot");
                             stoprobot(&rover, usekcommands, answer);
                             commandsend_lamp_off();
                         }
+                        logmsg(logfd, time_start, "Err: Failed to read main memmap correctly (invalid length) (3)");
                         sprintf(errmsg, "Failed to read main memmap correctly (invalid length: %d). Press a key to quit!", ret);
                         errormsg(errmsg, 1);
                         quit = 3;
                         break;
                     }
                     if (rover.config->has_second_controller == 1) {
+                        logmsg(logfd, time_start, "Reading second memmap from robot");
                         ret = rover_read_full_memmap(rover.memmap_second, rover.regs->controller_addr_second, &rover);
                         if (ret == -2) {
                             if (dummymode == 0) {
                                 commandsend_lamp_on();
+                                logmsg(logfd, time_start, "Stoprobot");
                                 stoprobot(&rover, usekcommands, answer);
                                 commandsend_lamp_off();
                             }
+                            logmsg(logfd, time_start, "Err: Fatal error, while reading second memmap! (2)");
                             errormsg("Fatal error, while reading second memmap! Press a key to quit!", 5);
                             quit = 2;
                             break;
@@ -502,9 +550,11 @@ int main() {
                             unsigned char errmsg[256];
                             if (dummymode == 0) {
                                 commandsend_lamp_on();
+                                logmsg(logfd, time_start, "Stoprobot");
                                 stoprobot(&rover, usekcommands, answer);
                                 commandsend_lamp_off();
                             }
+                            logmsg(logfd, time_start, "Err: Failed to read second memmap correctly (invalid length) (3)");
                             sprintf(errmsg, "Failed to read second memmap correctly (invalid length: %d). Press a key to quit!", ret);
                             errormsg(errmsg, 1);
                             quit = 3;
@@ -666,6 +716,8 @@ int main() {
             if (ret) {
                 if (FD_ISSET(0, &commfdset)) {
                     c = getch();
+                    logmsg(logfd, time_start, "Keypress:");
+                    logmsg(logfd, time_start, &c);
                 }
                 // don't read any new data, while the previous buffer has not been emptied yet
                 if ((remotecontrol == 1) && (sockread == 0)) {
@@ -673,16 +725,21 @@ int main() {
                         sockread = read(clientfd, &socketcommbuff[socketcommbuff_offset], BUFFER_SIZE);
                         socketcommbuff[sockread] = 0;
                         if (sockread == 0) {
+                            logmsg(logfd, time_start, "Client disconnected. (7)");
                             errormsg("Client disconnected! Press a key to quit!", 1);
                             quit = 7;
                             break;
                         }
+                        sprintf(logstring, "Read from socket %d:-%s-", sockread, socketcommbuff);
+                        logmsg(logfd, time_start, logstring);
                         if (sockread == -1) {
                             if (dummymode == 0) {
                                 commandsend_lamp_on();
+                                logmsg(logfd, time_start, "Stoprobot");
                                 stoprobot(&rover, usekcommands, answer);
                                 commandsend_lamp_off();
                             }
+                            logmsg(logfd, time_start, "Socket read error! (4)");
                             errormsg("Socket read error! Press a key to quit!", 1);
                             quit = 4;
                             break;
@@ -702,9 +759,11 @@ int main() {
                 if (sockcommi == BUFFER_SIZE) {
                     if (dummymode == 0) {
                         commandsend_lamp_on();
+                        logmsg(logfd, time_start, "Stoprobot");
                         stoprobot(&rover, usekcommands, answer);
                         commandsend_lamp_on();
                     }
+                    logmsg(logfd, time_start, "Bad message through socket - Too long (no newline found) (5)!");
                     errormsg("Bad message through socket - Too long (no newline found)! Press a key to quit!", 1);
                     quit = 5;
                     break;
@@ -739,12 +798,15 @@ int main() {
                 if (commlen != 8) {
                     strncpy(replymsg, "!BADCMD!\r\n", 10);
                     wret = write(clientfd, replymsg, 10);
+                    logmsg(logfd, time_start, "Sent: !BADCMD!");
                     if (wret == -1) {
                         if (dummymode == 0) {
                             commandsend_lamp_on();
+                            logmsg(logfd, time_start, "Stoprobot");
                             stoprobot(&rover, usekcommands, answer);
                             commandsend_lamp_off();
                         }
+                        logmsg(logfd, time_start, "Err: Cannot send reply to client (6).");
                         errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
                         quit = 6;
                         break;
@@ -752,9 +814,13 @@ int main() {
                 } else {
                     int badcommand = 1;
 
+                    logmsg(logfd, time_start, "Processing command: ");
+                    logmsg(logfd, time_start, receivedcommand);
+
                     if (strncmp(receivedcommand, "STOPZERO", 8) == 0) {
                         if (dummymode == 0) {
                             commandsend_lamp_on();
+                            logmsg(logfd, time_start, "Stoprobot");
                             stoprobot(&rover, usekcommands, answer);
                             commandsend_lamp_off();
                         }
@@ -766,12 +832,15 @@ int main() {
                         time_last_remotecmd_recv = timestruct.tv_sec + timestruct.tv_usec / 1000000.0;
                         strncpy(replymsg, "OKZERO\r\n", 8);
                         wret = write(clientfd, replymsg, 8);
+                        logmsg(logfd, time_start, "Sent: OKZERO");
                         if (wret == -1) {
                             if (dummymode == 0) {
                                 commandsend_lamp_on();
+                                logmsg(logfd, time_start, "Stoprobot");
                                 stoprobot(&rover, usekcommands, answer);
                                 commandsend_lamp_off();
                             }
+                            logmsg(logfd, time_start, "Err: Cannot send reply to client (6).");
                             errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
                             quit = 6;
                             break;
@@ -786,12 +855,15 @@ int main() {
                         if ((newrotret != 1) || (newrot < -10000) || (newrot > 10000)) {
                             strncpy(replymsg, "!BADROT!\r\n", 10);
                             wret = write(clientfd, replymsg, 10);
+                            logmsg(logfd, time_start, "Sent: !BADROT!");
                             if (wret == -1) {
                                 if (dummymode == 0) {
                                     commandsend_lamp_on();
+                                    logmsg(logfd, time_start, "Stoprobot");
                                     stoprobot(&rover, usekcommands, answer);
                                     commandsend_lamp_off();
                                 }
+                                logmsg(logfd, time_start, "Err: Cannot send reply to client (6).");
                                 errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
                                 quit = 6;
                                 break;
@@ -799,6 +871,7 @@ int main() {
                         } else {
                             rotate = newrot;
                             set_new_rot_value_from_remote = 1;
+                            logmsg(logfd, time_start, "Will set newrot");
                             gettimeofday(&timestruct, NULL);
                             time_last_remotecmd_recv = timestruct.tv_sec + timestruct.tv_usec / 1000000.0;
                         }
@@ -812,12 +885,15 @@ int main() {
                         if ((newspxret != 1) || (newspx < -10000) || (newspx > 10000)) {
                             strncpy(replymsg, "!BADSPX!\r\n", 10);
                             wret = write(clientfd, replymsg, 10);
+                            logmsg(logfd, time_start, "Sent: !BADSPX!");
                             if (wret == -1) {
                                 if (dummymode == 0) {
                                     commandsend_lamp_on();
+                                    logmsg(logfd, time_start, "Stoprobot");
                                     stoprobot(&rover, usekcommands, answer);
                                     commandsend_lamp_off();
                                 }
+                                logmsg(logfd, time_start, "Err: Cannot send reply to client (6).");
                                 errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
                                 quit = 6;
                                 break;
@@ -825,6 +901,7 @@ int main() {
                         } else {
                             speedX = newspx;
                             set_new_spx_value_from_remote = 1;
+                            logmsg(logfd, time_start, "Will set newspx");
                             gettimeofday(&timestruct, NULL);
                             time_last_remotecmd_recv = timestruct.tv_sec + timestruct.tv_usec / 1000000.0;
                         }
@@ -839,12 +916,15 @@ int main() {
                         if ((newspyret != 1) || (newspy < -10000) || (newspy > 10000)) {
                             strncpy(replymsg, "!BADSPY!\r\n", 10);
                             wret = write(clientfd, replymsg, 10);
+                            logmsg(logfd, time_start, "Sent: !BADSPY!");
                             if (wret == -1) {
                                 if (dummymode == 0) {
                                     commandsend_lamp_on();
+                                    logmsg(logfd, time_start, "Stoprobot");
                                     stoprobot(&rover, usekcommands, answer);
                                     commandsend_lamp_off();
                                 }
+                                logmsg(logfd, time_start, "Err: Cannot send reply to client (6).");
                                 errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
                                 quit = 6;
                                 break;
@@ -852,6 +932,7 @@ int main() {
                         } else {
                             speedY = newspy;
                             set_new_spy_value_from_remote = 1;
+                            logmsg(logfd, time_start, "Will set newspy");
                             gettimeofday(&timestruct, NULL);
                             time_last_remotecmd_recv = timestruct.tv_sec + timestruct.tv_usec / 1000000.0;
                         }
@@ -860,12 +941,15 @@ int main() {
                 if (badcommand == 1) {
                     strncpy(replymsg, "!BADCMD!\r\n", 10);
                     wret = write(clientfd, replymsg, 10);
+                    logmsg(logfd, time_start, "Sent: !BADCMD!");
                     if (wret == -1) {
                         if (dummymode == 0) {
                             commandsend_lamp_on();
+                            logmsg(logfd, time_start, "Stoprobot");
                             stoprobot(&rover, usekcommands, answer);
                             commandsend_lamp_off();
                         }
+                        logmsg(logfd, time_start, "Err: Cannot send reply to client (6).");
                         errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
                         quit = 6;
                         break;
@@ -883,6 +967,7 @@ int main() {
                 rotate = 0;
                 if (dummymode == 0) {
                     commandsend_lamp_on();
+                    logmsg(logfd, time_start, "Stoprobot");
                     stoprobot(&rover, usekcommands, answer);
                     commandsend_lamp_off();
                 }
@@ -1053,8 +1138,10 @@ int main() {
                     unsigned char replymsg[16];
                     int wret;
 
+                    logmsg(logfd, time_start, "Remotecommand timeout");
                     if (dummymode == 0) {
                         commandsend_lamp_on();
+                        logmsg(logfd, time_start, "Stoprobot");
                         stoprobot(&rover, usekcommands, answer);
                         commandsend_lamp_off();
                     }
@@ -1066,8 +1153,10 @@ int main() {
                     set_new_rot_value_from_remote = 0;
                     strncpy(replymsg, "!NOCMST!\r\n", 10);
                     wret = write(clientfd, replymsg, 10);
+                    logmsg(logfd, time_start, "Sent: !NOCMST!");
                     remotecmd_timed_out = 1;
                     if (wret == -1) {
+                        logmsg(logfd, time_start, "Err: Cannot send reply to client (6).");
                         errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
                         perror("write()");
                         quit = 6;
@@ -1082,6 +1171,8 @@ int main() {
         if ((usekcommands == 1) && ((time_current - time_last_kcmdsent) > REPEAT_TIME_SEC_KCMDSENT)) {
             if (dummymode == 0) {
                 commandsend_lamp_on();
+                sprintf(logstring, "ksetXYrot: X:%d Y:%d rot:%d", speedX, speedY, rotate);
+                logmsg(logfd, time_start, logstring);
                 setret = rover_kset_XYrotation_speed(speedX, speedY, rotate, answer);
                 commandsend_lamp_off();
                 usleep(100);
@@ -1095,6 +1186,8 @@ int main() {
 // pozitiv elore -- negativ hatra
                 if (dummymode == 0) {
                     commandsend_lamp_on();
+                    sprintf(logstring, "Set robot X speed: %d", speedX);
+                    logmsg(logfd, time_start, logstring);
                     setret = rover_set_X_speed(&rover, speedX, answer);
                     commandsend_lamp_off();
                     usleep(100);
@@ -1108,6 +1201,8 @@ int main() {
 // pozitiv balra - negativ jobbra
                     if (dummymode == 0) {
                         commandsend_lamp_on();
+                        sprintf(logstring, "Set robot Y speed: %d", speedY);
+                        logmsg(logfd, time_start, logstring);
                         setret = rover_set_Y_speed(&rover, speedY, answer);
                         commandsend_lamp_off();
                         usleep(100);
@@ -1121,6 +1216,8 @@ int main() {
 // pozitiv balra forgas (100 is meg eleg lassu)
                 if (dummymode == 0) {
                     commandsend_lamp_on();
+                    sprintf(logstring, "Set robot rotation: %d", rotate);
+                    logmsg(logfd, time_start, logstring);
                     setret = rover_set_rotation_speed(&rover, rotate, answer);
                     commandsend_lamp_off();
                     usleep(100);
@@ -1139,9 +1236,11 @@ int main() {
                     if (setret == 0) {
                         strncpy(replymsg, "OKSPX\r\n", 7);
                         wret = write(clientfd, replymsg, 7);
+                        logmsg(logfd, time_start, "Sent: OKSPX");
                     } else {
                         strncpy(replymsg, "!ERRSPX!\r\n", 10);
                         wret = write(clientfd, replymsg, 10);
+                        logmsg(logfd, time_start, "Sent: !ERRSPX!");
                     }
                 }
 
@@ -1150,9 +1249,11 @@ int main() {
                     if (setret == 0) {
                         strncpy(replymsg, "OKSPY\r\n", 7);
                         wret = write(clientfd, replymsg, 7);
+                        logmsg(logfd, time_start, "Sent: OKSPY");
                     } else {
                         strncpy(replymsg, "!ERRSPY!\r\n", 10);
                         wret = write(clientfd, replymsg, 10);
+                        logmsg(logfd, time_start, "Sent: !ERRSPY!");
                     }
                 }
 
@@ -1161,18 +1262,22 @@ int main() {
                     if (setret == 0) {
                         strncpy(replymsg, "OKROT\r\n", 7);
                         wret = write(clientfd, replymsg, 7);
+                        logmsg(logfd, time_start, "Sent: OKROT");
                     } else {
                         strncpy(replymsg, "!ERRROT!\r\n", 10);
                         wret = write(clientfd, replymsg, 10);
+                        logmsg(logfd, time_start, "Sent: !ERRROT!");
                     }
                 }
 
                 if (wret == -1) {
                     if (dummymode == 0) {
                         commandsend_lamp_on();
+                        logmsg(logfd, time_start, "Stoprobot");
                         stoprobot(&rover, usekcommands, answer);
                         commandsend_lamp_off();
                     }
+                    logmsg(logfd, time_start, "Err: Cannot sent reply to client (6).");
                     errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
                     quit = 6;
                     break;
@@ -1195,6 +1300,7 @@ int main() {
         wret = write(clientfd, replymsg, 17);
         if (wret == -1) {
             if (dummymode == 0) {
+                logmsg(logfd, time_start, "Stoprobot");
                 stoprobot(&rover, usekcommands, answer);
             }
             printf("Could not say goodbye to client... Connection lost?");
@@ -1227,6 +1333,10 @@ int main() {
             rover_disable_motors(&rover, rover.regs->controller_addr_second, answer);
         }
     }
+
+    logmsg(logfd, time_start, "Exit");
+
+    close(logfd);
 
     return 0;
 
