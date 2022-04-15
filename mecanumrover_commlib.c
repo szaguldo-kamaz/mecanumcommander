@@ -131,6 +131,20 @@ int check_invalidchars(unsigned char *message) {
 }
 
 
+int check_serial_dev() {
+    int chkfd;
+
+    chkfd = open(DEVFILE, O_RDWR);
+    if (chkfd == -1) {
+        return -1;
+    }
+
+    close(chkfd);
+
+    return 0;
+}
+
+
 int send_command_raw(unsigned char *message, unsigned char messagelen, unsigned char *reply) {
 
     int serial, ret;

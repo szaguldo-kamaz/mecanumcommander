@@ -161,6 +161,11 @@ int main() {
 
     } else {
 
+        if (check_serial_dev() == -1) {
+            printf("Cannot open serial port: %s!\n", DEVFILE);
+            exit(1);
+        }
+
         if (readmemmapfromfile == 1) {
 
             if (access("memmap_0x10.dat", R_OK) != 0) {

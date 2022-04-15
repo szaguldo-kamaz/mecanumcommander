@@ -132,6 +132,7 @@ int conv_int16_to_int32(int int16);
 int check_and_remove_rs485_error(unsigned char *message);
 int check_invalidchars(unsigned char *message);
 int check_and_remove_readey(unsigned char *message); // readey (sic!)
+int check_serial_dev();
 
 // serial port - transmit
 int send_command_raw(unsigned char *message, unsigned char messagelen, unsigned char *reply);
