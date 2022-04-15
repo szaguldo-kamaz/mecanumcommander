@@ -120,7 +120,7 @@ int main() {
 
     int listenfd=0, clientfd=0, sockread=0, socketcommbuff_offset=0;
     struct sockaddr_in serv_addr;
-    unsigned char socketcommbuff[1025];
+    unsigned char socketcommbuff[BUFFER_SIZE+1];
     unsigned char receivedcommand[16];
     unsigned char set_new_spx_value_from_remote=0;
     unsigned char set_new_spy_value_from_remote=0;
@@ -253,7 +253,7 @@ int main() {
             exit(8);
         }
         if (ret) {
-            sockread = read(clientfd, &socketcommbuff[socketcommbuff_offset], 1024);
+            sockread = read(clientfd, &socketcommbuff[socketcommbuff_offset], BUFFER_SIZE);
             if ((sockread > 10) ||
                 ((strncmp(socketcommbuff, COMMANDER_PASSWORD, 8) != 0) &&
                  (strncmp(socketcommbuff, COMMANDER_PASSWORD"\n", 9) != 0) &&
@@ -665,7 +665,7 @@ int main() {
                 // don't read any new data, while the previous buffer has not been emptied yet
                 if ((remotecontrol == 1) && (sockread == 0)) {
                     if (FD_ISSET(clientfd, &commfdset)) {
-                        sockread = read(clientfd, &socketcommbuff[socketcommbuff_offset], 1024);
+                        sockread = read(clientfd, &socketcommbuff[socketcommbuff_offset], BUFFER_SIZE);
                         socketcommbuff[sockread] = 0;
                         if (sockread == -1) {
                             if (dummymode == 0) {
@@ -688,8 +688,8 @@ int main() {
                 unsigned int sockcommi, copyi, commlen, wret, difflen;
                 unsigned char replymsg[16];
 
-                for (sockcommi = 0; ((socketcommbuff[sockcommi] != '\n') && (socketcommbuff[sockcommi] != '\r') && (sockcommi < 1024) && (sockcommi < sockread)); sockcommi++) {}
-                if (sockcommi == 1024) {
+                for (sockcommi = 0; ((socketcommbuff[sockcommi] != '\n') && (socketcommbuff[sockcommi] != '\r') && (sockcommi < BUFFER_SIZE) && (sockcommi < sockread)); sockcommi++) {}
+                if (sockcommi == BUFFER_SIZE) {
                     if (dummymode == 0) {
                         commandsend_lamp_on();
                         stoprobot(&rover, usekcommands, answer);
