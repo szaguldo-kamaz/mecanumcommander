@@ -511,8 +511,6 @@ int main() {
 
             if ((time_current - time_last_memmapread) > REPEAT_TIME_SEC_MEMMAPREAD) {
 
-                int fd;
-
                 // heart on
                 attron(COLOR_PAIR(5) | A_BOLD);
                 mvprintw(statusdrawy + 1, statusdrawx + 16, "♥");
