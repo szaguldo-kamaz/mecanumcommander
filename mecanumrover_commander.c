@@ -151,6 +151,7 @@ int main() {
     unsigned char usekcommands=0;       // use the "triple command set"
     unsigned char readmemmapfromfile=0; // do not get the memmap from the robot, instead read it from a file
     unsigned char remotecontrolproto=0; // 0 - TCP, 1 - UDP
+    unsigned char refreshmemmap=0;      // re-read memmap periodically (on/off - 1/0)
 
 
 // create logfile
@@ -215,6 +216,33 @@ int main() {
             } else {
                 printf("Unknown rover type: 0x%X!\n", rover.sysname);
                 exit(1);
+            }
+
+            logmsg(logfd, time_start, "Reading main memmap from robot - initial");
+            ret = rover_read_full_memmap(rover.memmap_main, rover.regs->controller_addr_main, &rover);
+            if (ret == -2) {
+                logmsg(logfd, time_start, "Err: Fatal error, while reading main memmap! (initial)");
+                printf("Fatal error, while reading main memmap - initial!");
+                exit(1);
+            }
+            if (ret != 384) {
+                logmsg(logfd, time_start, "Err: Failed to read main memmap correctly (invalid length) (initial)");
+                printf("Failed to read main memmap correctly (invalid length: %d) - initial.", ret);
+                exit(1);
+            }
+            if (rover.config->has_second_controller == 1) {
+                logmsg(logfd, time_start, "Reading second memmap from robot - initial");
+                ret = rover_read_full_memmap(rover.memmap_second, rover.regs->controller_addr_second, &rover);
+                if (ret == -2) {
+                    logmsg(logfd, time_start, "Err: Fatal error, while reading second memmap! (initial)");
+                    printf("Fatal error, while reading second memmap - initial!");
+                    exit(1);
+                }
+                if (ret != 384) {
+                    logmsg(logfd, time_start, "Err: Failed to read second memmap correctly (invalid length) (initial)");
+                    printf("Failed to read second memmap correctly (invalid length: %d) - initial", ret);
+                    exit(1);
+                }
             }
 
         }
@@ -507,7 +535,7 @@ int main() {
         gettimeofday(&timestruct, NULL);
         time_current = timestruct.tv_sec + timestruct.tv_usec / 1000000.0;
 
-        if (dummymode == 0) {
+        if ( (refreshmemmap == 1) && (dummymode == 0) ) {
 
             if ((time_current - time_last_memmapread) > REPEAT_TIME_SEC_MEMMAPREAD) {
 
@@ -700,7 +728,7 @@ int main() {
         attroff(COLOR_PAIR(1));
 
         // heart off
-        if (dummymode == 0) {
+        if ( (refreshmemmap == 1) && (dummymode == 0) ) {
             attron(COLOR_PAIR(1));
             mvprintw(statusdrawy + 1, statusdrawx + 16, " ");
             attroff(COLOR_PAIR(1));
@@ -1118,6 +1146,7 @@ int main() {
                 case  68: speedY -= 100; break;
                 case  81: rotate += 500; break;
                 case  69: rotate -= 500; break;
+                case 109: refreshmemmap = !refreshmemmap; // 'm'
             }
 
         } else { // c == -1 - no key was pressed
