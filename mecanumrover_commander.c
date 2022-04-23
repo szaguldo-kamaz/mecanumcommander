@@ -120,7 +120,7 @@ int main() {
     unsigned char remotecmd_timed_out=1;
 
     int logfd;
-    char logstring[512];
+    char logstring[BUFFER_SIZE+BUFFER_SIZE/4];
 
     int speedX=0, speedY=0, rotate=0;
     int prevspeedX=0, prevspeedY=0, prevrotate=0;
