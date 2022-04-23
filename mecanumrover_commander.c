@@ -22,6 +22,7 @@
 #include <arpa/inet.h>
 #include <signal.h>
 #include "mecanumrover_commlib.h"
+#include "crc16/crc16.h"
 
 #define COMMANDER_VERSION  "0.50"
 #define COMMANDER_PASSWORD "PASSWORD"
@@ -895,14 +896,26 @@ int main() {
 
                 sockread = 0;
                 udp_packetno = (socketcommbuff[0] << 8) + socketcommbuff[1];
-                if (udp_packetno > udp_lastpacketno) {
-                    udp_lastpacketno = udp_packetno;
+                if ( (udp_packetno > udp_lastpacketno) ||
+                     ( (udp_lastpacketno > 0xFF00) && (udp_packetno < 0x00FF) ) ) {  // allow a little tolerance for possible packet loss
+
+                    int recvcksum, calccksum;
+
                     strncpy(receivedcommand, &socketcommbuff[2], 8);
                     receivedcommand[8] = 0;
-                    // TODO checksum
+                    recvcksum = (socketcommbuff[10] << 8) + socketcommbuff[11];
+                    calccksum = crc16_ccitt(socketcommbuff, 10);
+                    if (recvcksum != calccksum) {
+                        sprintf(logstring, "Checksum error! Dropped UDP packet %d:%s:recv/calccrc:%x/%x", udp_packetno, receivedcommand, recvcksum, calccksum);
+                        logmsg(logfd, time_start, logstring);
+                        continue;
+                    }
                     sprintf(logstring, "Extracted command from UDP packet:-%s-", receivedcommand);
                     logmsg(logfd, time_start, logstring);
+                    udp_lastpacketno = udp_packetno;
                 } else {
+                    sprintf(logstring, "Dropped old UDP packet: %d vs. %d", udp_packetno, udp_lastpacketno);
+                    logmsg(logfd, time_start, logstring);
                     continue;
                 };
 
