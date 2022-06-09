@@ -1317,7 +1317,7 @@ int main() {
                     if (nolamp_when_setcmd == 0) {
                         commandsend_lamp_off();
                     }
-                    usleep(100);
+//                    usleep(10);
                     time_last_cmdsent = time_current;
                 }
                 prevspeedX = speedX;
@@ -1336,7 +1336,7 @@ int main() {
                         if (nolamp_when_setcmd == 0) {
                             commandsend_lamp_off();
                         }
-                        usleep(100);
+//                        usleep(10);
                         time_last_cmdsent = time_current;
                     }
                     prevspeedY = speedY;
@@ -1355,7 +1355,7 @@ int main() {
                     if (nolamp_when_setcmd == 0) {
                         commandsend_lamp_off();
                     }
-                    usleep(100);
+//                    usleep(10);
                     time_last_cmdsent = time_current;
                 }
                 prevrotate = rotate;
