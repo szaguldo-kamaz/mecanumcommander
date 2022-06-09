@@ -118,6 +118,7 @@ int main() {
     struct timeval timestruct;
     double time_start, time_current, time_last_memmapread, time_last_cmdsent, time_last_kcmdsent, time_last_remotecmd_recv;
     unsigned char remotecmd_timed_out=1;
+    unsigned char repeatcommand_timeisup=0;
 
     int logfd;
     char logstring[BUFFER_SIZE+BUFFER_SIZE/4];
@@ -1303,9 +1304,17 @@ int main() {
             }
         }
 
-        if ((usekcommands == 0) && ((time_current - time_last_cmdsent) > REPEAT_TIME_SEC_CMDSENT)) {
+        if ((repeatcommands == 1) && ((time_current - time_last_cmdsent) > REPEAT_TIME_SEC_CMDSENT)) {
+            repeatcommand_timeisup = 1;
+        } else {
+            repeatcommand_timeisup = 0;
+        }
 
-            if ( (repeatcommands == 1) || (set_new_spx_value_from_remote == 1) || (prevspeedX != speedX) ) {
+        if (usekcommands == 0) {
+
+            if ( ((set_new_spx_value_from_remote == 1) || (prevspeedX != speedX)) ||
+                 (repeatcommand_timeisup == 1) ) {
+
 // pozitiv elore -- negativ hatra
                 if (dummymode == 0) {
                     if (nolamp_when_setcmd == 0) {
@@ -1324,7 +1333,10 @@ int main() {
             }
 
             if (rover.config->has_Y_speed == 1) {
-                if ( (repeatcommands == 1) || (set_new_spy_value_from_remote == 1) || (prevspeedY != speedY) ) {
+
+                if ( ((set_new_spy_value_from_remote == 1) || (prevspeedY != speedY)) ||
+                     (repeatcommand_timeisup == 1) ) {
+
 // pozitiv balra - negativ jobbra
                     if (dummymode == 0) {
                         if (nolamp_when_setcmd == 0) {
@@ -1343,7 +1355,9 @@ int main() {
                 }
             }
 
-            if ( (repeatcommands == 1) || (set_new_rot_value_from_remote == 1) || (prevrotate != rotate) ) {
+            if ( ((set_new_rot_value_from_remote == 1) || (prevrotate != rotate)) ||
+                 (repeatcommand_timeisup == 1) ) {
+
 // pozitiv balra forgas (100 is meg eleg lassu)
                 if (dummymode == 0) {
                     if (nolamp_when_setcmd == 0) {
