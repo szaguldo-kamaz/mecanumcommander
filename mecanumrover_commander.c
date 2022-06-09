@@ -153,6 +153,7 @@ int main() {
     unsigned char readmemmapfromfile=0; // do not get the memmap from the robot, instead read it from a file
     unsigned char remotecontrolproto=0; // 0 - TCP, 1 - UDP
     unsigned char refreshmemmap=0;      // re-read memmap periodically (on/off - 1/0)
+    unsigned char nolamp_when_setcmd=1; // do not blink the "lamps" on the UI when sending set speed commands
 
 
 // create logfile
@@ -1307,11 +1308,15 @@ int main() {
             if ( (repeatcommands == 1) || (set_new_spx_value_from_remote == 1) || (prevspeedX != speedX) ) {
 // pozitiv elore -- negativ hatra
                 if (dummymode == 0) {
-                    commandsend_lamp_on();
+                    if (nolamp_when_setcmd == 0) {
+                        commandsend_lamp_on();
+                    }
                     sprintf(logstring, "Set robot X speed: %d", speedX);
                     logmsg(logfd, time_start, logstring);
                     setret = rover_set_X_speed(&rover, speedX, answer);
-                    commandsend_lamp_off();
+                    if (nolamp_when_setcmd == 0) {
+                        commandsend_lamp_off();
+                    }
                     usleep(100);
                     time_last_cmdsent = time_current;
                 }
@@ -1322,11 +1327,15 @@ int main() {
                 if ( (repeatcommands == 1) || (set_new_spy_value_from_remote == 1) || (prevspeedY != speedY) ) {
 // pozitiv balra - negativ jobbra
                     if (dummymode == 0) {
-                        commandsend_lamp_on();
+                        if (nolamp_when_setcmd == 0) {
+                            commandsend_lamp_on();
+                        }
                         sprintf(logstring, "Set robot Y speed: %d", speedY);
                         logmsg(logfd, time_start, logstring);
                         setret = rover_set_Y_speed(&rover, speedY, answer);
-                        commandsend_lamp_off();
+                        if (nolamp_when_setcmd == 0) {
+                            commandsend_lamp_off();
+                        }
                         usleep(100);
                         time_last_cmdsent = time_current;
                     }
@@ -1337,11 +1346,15 @@ int main() {
             if ( (repeatcommands == 1) || (set_new_rot_value_from_remote == 1) || (prevrotate != rotate) ) {
 // pozitiv balra forgas (100 is meg eleg lassu)
                 if (dummymode == 0) {
-                    commandsend_lamp_on();
+                    if (nolamp_when_setcmd == 0) {
+                        commandsend_lamp_on();
+                    }
                     sprintf(logstring, "Set robot rotation: %d", rotate);
                     logmsg(logfd, time_start, logstring);
                     setret = rover_set_rotation_speed(&rover, rotate, answer);
-                    commandsend_lamp_off();
+                    if (nolamp_when_setcmd == 0) {
+                        commandsend_lamp_off();
+                    }
                     usleep(100);
                     time_last_cmdsent = time_current;
                 }
