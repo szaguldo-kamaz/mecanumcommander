@@ -1313,7 +1313,7 @@ int main() {
                     }
                     sprintf(logstring, "Set robot X speed: %d", speedX);
                     logmsg(logfd, time_start, logstring);
-                    setret = rover_set_X_speed(&rover, speedX, answer);
+                    setret = rover_set_X_speed(&rover, speedX, NULL);
                     if (nolamp_when_setcmd == 0) {
                         commandsend_lamp_off();
                     }
@@ -1332,7 +1332,7 @@ int main() {
                         }
                         sprintf(logstring, "Set robot Y speed: %d", speedY);
                         logmsg(logfd, time_start, logstring);
-                        setret = rover_set_Y_speed(&rover, speedY, answer);
+                        setret = rover_set_Y_speed(&rover, speedY, NULL);
                         if (nolamp_when_setcmd == 0) {
                             commandsend_lamp_off();
                         }
@@ -1351,7 +1351,7 @@ int main() {
                     }
                     sprintf(logstring, "Set robot rotation: %d", rotate);
                     logmsg(logfd, time_start, logstring);
-                    setret = rover_set_rotation_speed(&rover, rotate, answer);
+                    setret = rover_set_rotation_speed(&rover, rotate, NULL);
                     if (nolamp_when_setcmd == 0) {
                         commandsend_lamp_off();
                     }

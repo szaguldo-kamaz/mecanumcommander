@@ -194,51 +194,58 @@ int send_command_raw(unsigned char *message, unsigned char messagelen, unsigned 
 
     datareceived = 0;
 
-    reply[0] = 0;
-    while(1) {
-        ret = select(serial + 1, &serfdset, NULL, NULL, &tv);
-        if (ret == -1) {
-           perror("select(): ");
-           break;
-        }
-        else if (ret) {
-            ret = read(serial, &incoming, 1);
+    // if reply is NULL, then we do not care about reply
+    if (reply != NULL) {
+
+        reply[0] = 0;
+
+        while(1) {
+            ret = select(serial + 1, &serfdset, NULL, NULL, &tv);
+            if (ret == -1) {
+                perror("select(): ");
+                break;
+            }
+            else if (ret) {
+                ret = read(serial, &incoming, 1);
 #ifdef DEBUG
-            printf("Reply: 0x%x\n", incoming);
+                printf("Reply: 0x%x\n", incoming);
 #endif
-            // ha esetleg van meg valami egyeb a kovetkezo sorban, amugy ne varjunk ha nincs a rendes valasz utan semmi
-            if (incoming == '\n') {
-                tv.tv_usec = 0;
+                // ha esetleg van meg valami egyeb a kovetkezo sorban, amugy ne varjunk ha nincs a rendes valasz utan semmi
+                if (incoming == '\n') {
+                    tv.tv_usec = 0;
+                } else {
+                    tv.tv_usec = REPLYWAIT_TIMEOUT_USEC;
+                }
+                reply[datareceived++] = incoming;
+                if (datareceived == BUFFER_SIZE) {
+                    printf("Buffer full (%d bytes)!\n", BUFFER_SIZE);
+                    close(serial);
+                    return datareceived;
+                }
             } else {
-                tv.tv_usec = REPLYWAIT_TIMEOUT_USEC;
-            }
-            reply[datareceived++] = incoming;
-            if (datareceived == BUFFER_SIZE) {
-                printf("Buffer full (%d bytes)!\n", BUFFER_SIZE);
-                close(serial);
-                return datareceived;
-            }
-        } else {
 #ifdef DEBUG
-            if (datareceived == 0) {
-                printf("No reply within " REPLYWAIT_TIMEOUT_USEC " usec.\n");
-            }
+                if (datareceived == 0) {
+                    printf("No reply within " REPLYWAIT_TIMEOUT_USEC " usec.\n");
+                }
 #endif
-            break;
+                break;
+            }
         }
-    }
 
 #ifdef DEBUG
-    if (datareceived > 0) {
-        printf("\n");
-    }
+        if (datareceived > 0) {
+            printf("\n");
+        }
 #endif
+
+        reply[datareceived] = 0;
+
+    }
 
     close(serial);
 
-    reply[datareceived] = 0;
-
     return datareceived;
+
 }
 
 
