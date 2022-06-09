@@ -182,8 +182,7 @@ int send_command_raw(unsigned char *message, unsigned char messagelen, unsigned 
     FD_ZERO(&serfdset);
     FD_SET(serial, &serfdset);
     tv.tv_sec  = 0;
-    tv.tv_usec = 100000;
-//    tv.tv_usec = 10000;
+    tv.tv_usec = REPLYWAIT_TIMEOUT_USEC;
 
     ret = write(serial, message, ++messagelen);
     if (ret != messagelen) {
@@ -211,7 +210,7 @@ int send_command_raw(unsigned char *message, unsigned char messagelen, unsigned 
             if (incoming == '\n') {
                 tv.tv_usec = 0;
             } else {
-                tv.tv_usec = 100000;
+                tv.tv_usec = REPLYWAIT_TIMEOUT_USEC;
             }
             reply[datareceived++] = incoming;
             if (datareceived == BUFFER_SIZE) {
@@ -222,7 +221,7 @@ int send_command_raw(unsigned char *message, unsigned char messagelen, unsigned 
         } else {
 #ifdef DEBUG
             if (datareceived == 0) {
-                printf("No reply within 100000 usec.\n");
+                printf("No reply within " REPLYWAIT_TIMEOUT_USEC " usec.\n");
             }
 #endif
             break;

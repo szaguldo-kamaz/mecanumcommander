@@ -750,7 +750,7 @@ int main() {
         }
 
         tv.tv_sec  = 0;
-        tv.tv_usec = 100000;
+        tv.tv_usec = REPLYWAIT_TIMEOUT_USEC;
 
         if (remotecontrol == 1) {
             if (remotecontrolproto == 0) { // TCP

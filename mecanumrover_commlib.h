@@ -26,6 +26,10 @@
 #define LIMIT_SPEED_Y    2100  // mm/sec
 #define LIMIT_SPEED_ROT  8000  // mrad/sec
 
+// max time in usec to wait for reply when sending a command to the rover's controller
+//#define REPLYWAIT_TIMEOUT_USEC 100000
+#define REPLYWAIT_TIMEOUT_USEC 50000
+
 #define SYSNAME_MECANUMROVER21      0x21
 #define SYSNAME_MEGAROVER3          0x30
 
