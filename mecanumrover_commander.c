@@ -806,19 +806,93 @@ int main() {
 
                     } else { // UDP
 
-                        if (FD_ISSET(listenfd, &commfdset)) {
-                            sockread = recvfrom(listenfd, (char *)socketcommbuff, 32, 0, (struct sockaddr *)NULL, NULL);
-                            socketcommbuff[sockread] = 0;
-                            sprintf(logstring, "Read UDP packet:%d:-%s-", sockread, socketcommbuff);
-                            logmsg(logfd, time_start, logstring);
-                            if (sockread != 12) {
-                                logmsg(logfd, time_start, "UDP payload is not 12 bytes!");
-                                sockread = 0;
+                        unsigned int udprecvpacketno = 0;
+                        unsigned char udp_payload[32];
+                        int udp_sockread;
+                        sockread = 0;
+
+                        while (1) {
+
+                            FD_ZERO(&commfdset);
+                            FD_SET(listenfd, &commfdset);
+                            tv.tv_sec  = 0;
+                            tv.tv_usec = 0;
+                            ret = select(listenfd + 1, &commfdset, NULL, NULL, &tv);
+                            if (ret == -1) {
+                                endwin();
+                                perror("select()");
+                                quit = 1;
+                                break;
                             }
+
+                            if (sockread >= (BUFFER_SIZE - 32)) {
+                                sprintf(logstring, "UDP buffer full: %d/%d", sockread, BUFFER_SIZE - 32);
+                                logmsg(logfd, time_start, logstring);
+                                break;
+                            }
+
+                            if (FD_ISSET(listenfd, &commfdset)) {
+                                udp_sockread = recvfrom(listenfd, udp_payload, 32, 0, (struct sockaddr *)NULL, NULL);
+
+                                udprecvpacketno++;
+
+                                sprintf(logstring, "Read UDP packet %d. (%d):%x %x %x %x %x %x %x %x %x %x %x %x", udprecvpacketno, udp_sockread,
+                                  udp_payload[0], udp_payload[1], udp_payload[2], udp_payload[3], udp_payload[4], udp_payload[5], udp_payload[6], udp_payload[7], udp_payload[8], udp_payload[9], udp_payload[10], udp_payload[11] );
+                                logmsg(logfd, time_start, logstring);
+
+                                if (udp_sockread == 12) {
+
+                                    udp_packetno = (udp_payload[0] << 8) + udp_payload[1];
+
+                                    if ( (udp_packetno > udp_lastpacketno) ||
+                                       ( (udp_lastpacketno > 0xFF00) && (udp_packetno < 0x00FF) ) ) {  // allow a little tolerance for possible packet loss
+
+                                        unsigned int recvcksum = (udp_payload[10] << 8) + udp_payload[11];
+                                        unsigned int calccksum = crc16_ccitt(udp_payload, 10);
+
+                                        if (recvcksum != calccksum) {
+                                            sprintf(logstring, "Checksum error! Dropped UDP packet %d:%s:recv/calccrc:%x/%x", udp_packetno, &udp_payload[2], recvcksum, calccksum);
+                                            logmsg(logfd, time_start, logstring);
+                                            continue;
+                                        }
+
+                                        udp_payload[10] = 0;
+                                        sprintf(logstring, "Command in UDP packet:-%s-", &udp_payload[2]);
+                                        logmsg(logfd, time_start, logstring);
+
+                                        strncpy(&socketcommbuff[sockread], &udp_payload[2], 8);
+                                        sockread += 9;
+                                        socketcommbuff[sockread-1] = '\n';
+                                        socketcommbuff[sockread] = 0;
+
+                                        //sprintf(logstring, "Full socketcommbuff(%d):-%s-", sockread, socketcommbuff);
+                                        //logmsg(logfd, time_start, logstring);
+
+                                        udp_lastpacketno = udp_packetno;
+
+                                    } else {
+                                        sprintf(logstring, "Dropped old UDP packet: %d vs. %d", udp_packetno, udp_lastpacketno);
+                                        logmsg(logfd, time_start, logstring);
+                                        continue;
+                                    }
+
+                                } else {
+                                    logmsg(logfd, time_start, "UDP payload is not 12 bytes!");
+                                }
+
+                            } else {  // nothing can be read (select)
+                                break;  // while(1)
+                            }
+
+                        }  // while(1)
+
+                        if (quit == 1) {
+                            break;
                         }
 
-                    }
-                }
+                    }  // UDP
+
+                }  // remotecontrol true + sockbuff is empty
 
             } else {
                 sockread = 0;
@@ -829,8 +903,6 @@ int main() {
         while (sockread > 0) {
             unsigned char replymsg[16];
             unsigned int wret;
-
-            if (remotecontrolproto == 0) { // TCP
 
                 unsigned int sockcommi, copyi, commlen, difflen;
 
@@ -876,52 +948,29 @@ int main() {
                 if (commlen == 0) { continue; }
 
                 if (commlen != 8) {
-                    strncpy(replymsg, "!BADCMD!\r\n", 10);
-                    wret = write(clientfd, replymsg, 10);
-                    logmsg(logfd, time_start, "Sent: !BADCMD!");
-                    if (wret == -1) {
-                        if (dummymode == 0) {
-                            commandsend_lamp_on();
-                            logmsg(logfd, time_start, "Stoprobot");
-                            stoprobot(&rover, usekcommands, answer);
-                            commandsend_lamp_off();
+                    logmsg(logfd, time_start, "Bad command length (!=8)");
+
+                    if (remotecontrolproto == 0) {  // TCP
+                        logmsg(logfd, time_start, "Sent: !BADCMD!");
+                        strncpy(replymsg, "!BADCMD!\r\n", 10);
+                        wret = write(clientfd, replymsg, 10);
+                        if (wret == -1) {
+                            if (dummymode == 0) {
+                                commandsend_lamp_on();
+                                logmsg(logfd, time_start, "Stoprobot");
+                                stoprobot(&rover, usekcommands, answer);
+                                commandsend_lamp_off();
+                            }
+                            logmsg(logfd, time_start, "Err: Cannot send reply to client (6).");
+                            errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
+                            quit = 6;
+                            break;
                         }
-                        logmsg(logfd, time_start, "Err: Cannot send reply to client (6).");
-                        errormsg("Cannot send reply to client! Connection lost? Press a key to quit!", 1);
-                        quit = 6;
-                        break;
                     }
+
                     continue;
                 }
 
-            } else { // UDP
-
-                sockread = 0;
-                udp_packetno = (socketcommbuff[0] << 8) + socketcommbuff[1];
-                if ( (udp_packetno > udp_lastpacketno) ||
-                     ( (udp_lastpacketno > 0xFF00) && (udp_packetno < 0x00FF) ) ) {  // allow a little tolerance for possible packet loss
-
-                    int recvcksum, calccksum;
-
-                    strncpy(receivedcommand, &socketcommbuff[2], 8);
-                    receivedcommand[8] = 0;
-                    recvcksum = (socketcommbuff[10] << 8) + socketcommbuff[11];
-                    calccksum = crc16_ccitt(socketcommbuff, 10);
-                    if (recvcksum != calccksum) {
-                        sprintf(logstring, "Checksum error! Dropped UDP packet %d:%s:recv/calccrc:%x/%x", udp_packetno, receivedcommand, recvcksum, calccksum);
-                        logmsg(logfd, time_start, logstring);
-                        continue;
-                    }
-                    sprintf(logstring, "Extracted command from UDP packet:-%s-", receivedcommand);
-                    logmsg(logfd, time_start, logstring);
-                    udp_lastpacketno = udp_packetno;
-                } else {
-                    sprintf(logstring, "Dropped old UDP packet: %d vs. %d", udp_packetno, udp_lastpacketno);
-                    logmsg(logfd, time_start, logstring);
-                    continue;
-                };
-
-            }
 
             {
                     int badcommand = 1;
@@ -1078,7 +1127,9 @@ int main() {
                 }
 
             }
-        }
+
+        }  //  while (sockread > 0)
+
 
         if (c != -1) {
             // stop
