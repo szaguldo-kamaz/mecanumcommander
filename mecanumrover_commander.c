@@ -1,8 +1,8 @@
 /*
     NLAB-MecanumCommander for Linux, a simple bridge to control VStone MecanumRover 2.1 / VStone MegaRover 3
     by David Vincze, vincze.david@webcode.hu
-    at Human-System Laboratory, Chuo University, Tokyo, Japan, 2021
-    version 0.50
+    at Human-System Laboratory, Chuo University, Tokyo, Japan, 2021-2022
+    version 0.60
     https://github.com/szaguldo-kamaz/
 */
 
