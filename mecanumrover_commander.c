@@ -24,7 +24,7 @@
 #include "mecanumrover_commlib.h"
 #include "crc16/crc16.h"
 
-#define COMMANDER_VERSION  "0.50"
+#define COMMANDER_VERSION  "0.60"
 #define COMMANDER_PASSWORD "PASSWORD"
 
 #define REPEAT_TIME_SEC_CMDSENT 0.4
