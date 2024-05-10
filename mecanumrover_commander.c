@@ -137,7 +137,7 @@ int main() {
 
     int listenfd=0, clientfd=0, sockread=0, socketcommbuff_offset=0;
     struct sockaddr_in serv_addr;
-    unsigned int udp_packetno=0, udp_lastpacketno=0;
+    unsigned int udp_lastpacketno=0;
     unsigned char socketcommbuff[BUFFER_SIZE+1];
     unsigned char receivedcommand[16];
     unsigned char set_new_spx_value_from_remote=0;
@@ -842,7 +842,7 @@ int main() {
 
                                 if (udp_sockread == 12) {
 
-                                    udp_packetno = (udp_payload[0] << 8) + udp_payload[1];
+                                    unsigned int udp_packetno = (udp_payload[0] << 8) + udp_payload[1];
 
                                     if ( (udp_packetno > udp_lastpacketno) ||
                                        ( (udp_lastpacketno > 0xFF00) && (udp_packetno < 0x00FF) ) ) {  // allow a little tolerance for possible packet loss
@@ -974,11 +974,19 @@ int main() {
 
             {
                     int badcommand = 1;
+                    int cmd_stopzero = 0;
+                    int cmd_resetall = 0;
 
                     logmsg(logfd, time_start, "Processing command: ");
                     logmsg(logfd, time_start, receivedcommand);
 
                     if (strncmp(receivedcommand, "STOPZERO", 8) == 0) {
+                        cmd_stopzero = 1;
+                    } else if (strncmp(receivedcommand, "RESETALL", 8) == 0) {
+                        cmd_resetall = 1;
+                    }
+
+                    if ((cmd_stopzero == 1) || (cmd_resetall == 1)) {
                         if (dummymode == 0) {
                             commandsend_lamp_on();
                             logmsg(logfd, time_start, "Stoprobot");
@@ -989,12 +997,22 @@ int main() {
                         speedX = 0;
                         speedY = 0;
                         badcommand = 0;
+                        if (cmd_resetall == 1) {
+                            udp_lastpacketno = 0;
+                            logmsg(logfd, time_start, "UDP lastpacketno reset to 0");
+                        }
                         gettimeofday(&timestruct, NULL);
                         time_last_remotecmd_recv = timestruct.tv_sec + timestruct.tv_usec / 1000000.0;
                         if (remotecontrolproto == 0) {
-                            strncpy(replymsg, "OKZERO\r\n", 8);
-                            wret = write(clientfd, replymsg, 8);
-                            logmsg(logfd, time_start, "Sent: OKZERO");
+                            if (cmd_stopzero == 1) {
+                                strncpy(replymsg, "OKZERO\r\n", 8);
+                                wret = write(clientfd, replymsg, 8);
+                                logmsg(logfd, time_start, "Sent: OKZERO");
+                            } else if (cmd_resetall == 1) {
+                                strncpy(replymsg, "OKRESET\r\n", 9);
+                                wret = write(clientfd, replymsg, 9);
+                                logmsg(logfd, time_start, "Sent: OKRESET");
+                            }
                             if (wret == -1) {
                                 if (dummymode == 0) {
                                     commandsend_lamp_on();
